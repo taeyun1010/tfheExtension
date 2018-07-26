@@ -1,0 +1,13 @@
+g++ tensor1_new.cpp -o tensor1_new -ltfhe-spqlios-fma -std=gnu++11 -lpthread
+
+
+gcc main.c -o swap -llua5.1 -I/usr/include/lua5.1/
+
+g++ main.cpp -shared -o mylib.so -fPIC -llua5.1 -I/usr/include/lua5.1/
+
+g++ -ansi -shared -fPIC -llua5.1 -I/usr/include/lua5.1/ -Wall -O3 -o tensor2lib.so tensor2lib.cpp /home/taeyun/Desktop/Homomorphic_Encryption/Homomorphic/common.o -L. -lfhew -lfftw3
+
+
+
+lua5.1
+		in cmd line
