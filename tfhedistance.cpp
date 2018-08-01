@@ -70,77 +70,113 @@ void full_adder_MUX(LweSample *sum, const LweSample *x, const LweSample *y, cons
 
 
 void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const int32_t nb_bits,
-                const TFheGateBootstrappingSecretKeySet *keyset) {
-    const LweParams *in_out_params = keyset->params->in_out_params;
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
     // carries
     LweSample *carry = new_LweSample_array(2, in_out_params);
-    bootsSymEncrypt(carry, 0, keyset); // first carry initialized to 0
+    // first carry initialized to 0
+    bootsCONSTANT(carry, 0, bk);
     // temps
     LweSample *temp = new_LweSample_array(3, in_out_params);
 
     for (int32_t i = 0; i < nb_bits; ++i) {
         //sumi = xi XOR yi XOR carry(i-1) 
-        bootsXOR(temp, x + i, y + i, &keyset->cloud); // temp = xi XOR yi
-        bootsXOR(sum + i, temp, carry, &keyset->cloud);
+        bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
+        bootsXOR(sum + i, temp, carry, bk);
 
         // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
-        bootsAND(temp + 1, x + i, y + i, &keyset->cloud); // temp1 = xi AND yi
-        bootsAND(temp + 2, carry, temp, &keyset->cloud); // temp2 = carry AND temp
-        bootsXOR(carry + 1, temp + 1, temp + 2, &keyset->cloud);
-        bootsCOPY(carry, carry + 1, &keyset->cloud);
+        bootsAND(temp + 1, x + i, y + i, bk); // temp1 = xi AND yi
+        bootsAND(temp + 2, carry, temp, bk); // temp2 = carry AND temp
+        bootsXOR(carry + 1, temp + 1, temp + 2, bk);
+        bootsCOPY(carry, carry + 1, bk);
     }
-    bootsCOPY(sum + nb_bits, carry, &keyset->cloud);
+    bootsCOPY(sum + nb_bits, carry, bk);
 
     delete_LweSample_array(3, temp);
     delete_LweSample_array(2, carry);
 }
 
+// //calculate x-y
+// void full_subtractor(LweSample *difference, const LweSample *x, const LweSample *y, const int32_t nb_bits,
+//                 const TFheGateBootstrappingSecretKeySet *keyset) {
+//     const LweParams *in_out_params = keyset->params->in_out_params;
+//     // carries
+//     LweSample *borrow = new_LweSample_array(2, in_out_params);
+    
+    
+//     bootsSymEncrypt(borrow, 0, keyset); // first carry initialized to 0
+//     // bootsCONSTANT(borrow, 0, &keyset->cloud);
+
+    
+//     // temps
+//     LweSample *temp = new_LweSample_array(6, in_out_params);
+
+//     for (int32_t i = 0; i < nb_bits; ++i) {
+//         //sumi = xi XOR yi XOR carry(i-1) 
+//         bootsXOR(temp, x + i, y + i, &keyset->cloud); // temp = xi XOR yi
+//         bootsXOR(difference + i, temp, borrow, &keyset->cloud);
+
+//         // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
+//         bootsNOT(temp + 1, x + i, &keyset->cloud); // temp1 = xi'
+//         bootsAND(temp + 2, temp + 1, borrow, &keyset->cloud); // temp2 = xi' AND Bin
+//         bootsAND(temp + 3, temp + 1, y + i, &keyset->cloud);  // temp3 = xi' AND yi
+//         bootsAND(temp + 4, y + i, borrow, &keyset->cloud);    //temp4 = yi AND Bin
+//         bootsOR(temp + 5, temp + 2, temp + 3, &keyset->cloud); //temp5 = (xi' AND Bin) OR (xi' AND yi)
+//         bootsOR(borrow + 1, temp + 5, temp + 4, &keyset->cloud);
+//         bootsCOPY(borrow, borrow + 1, &keyset->cloud);
+//     }
+//     // bootsCOPY(difference + nb_bits, carry, &keyset->cloud);
+
+//     delete_LweSample_array(6, temp);
+//     delete_LweSample_array(2, borrow);
+// }
+
 //calculate x-y
 void full_subtractor(LweSample *difference, const LweSample *x, const LweSample *y, const int32_t nb_bits,
-                const TFheGateBootstrappingSecretKeySet *keyset) {
-    const LweParams *in_out_params = keyset->params->in_out_params;
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
     // carries
     LweSample *borrow = new_LweSample_array(2, in_out_params);
-    bootsSymEncrypt(borrow, 0, keyset); // first carry initialized to 0
+    
+    // first carry initialized to 0
+    bootsCONSTANT(borrow, 0, bk);
+    
     // temps
     LweSample *temp = new_LweSample_array(6, in_out_params);
 
     for (int32_t i = 0; i < nb_bits; ++i) {
         //sumi = xi XOR yi XOR carry(i-1) 
-        bootsXOR(temp, x + i, y + i, &keyset->cloud); // temp = xi XOR yi
-        bootsXOR(difference + i, temp, borrow, &keyset->cloud);
+        bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
+        bootsXOR(difference + i, temp, borrow, bk);
 
         // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
-        bootsNOT(temp + 1, x + i, &keyset->cloud); // temp1 = xi'
-        bootsAND(temp + 2, temp + 1, borrow, &keyset->cloud); // temp2 = xi' AND Bin
-        bootsAND(temp + 3, temp + 1, y + i, &keyset->cloud);  // temp3 = xi' AND yi
-        bootsAND(temp + 4, y + i, borrow, &keyset->cloud);    //temp4 = yi AND Bin
-        bootsOR(temp + 5, temp + 2, temp + 3, &keyset->cloud); //temp5 = (xi' AND Bin) OR (xi' AND yi)
-        bootsOR(borrow + 1, temp + 5, temp + 4, &keyset->cloud);
-        bootsCOPY(borrow, borrow + 1, &keyset->cloud);
+        bootsNOT(temp + 1, x + i, bk); // temp1 = xi'
+        bootsAND(temp + 2, temp + 1, borrow, bk); // temp2 = xi' AND Bin
+        bootsAND(temp + 3, temp + 1, y + i, bk);  // temp3 = xi' AND yi
+        bootsAND(temp + 4, y + i, borrow, bk);    //temp4 = yi AND Bin
+        bootsOR(temp + 5, temp + 2, temp + 3, bk); //temp5 = (xi' AND Bin) OR (xi' AND yi)
+        bootsOR(borrow + 1, temp + 5, temp + 4, bk);
+        bootsCOPY(borrow, borrow + 1, bk);
     }
-    // bootsCOPY(difference + nb_bits, carry, &keyset->cloud);
+    // bootsCOPY(difference + nb_bits, carry, bk);
 
     delete_LweSample_array(6, temp);
     delete_LweSample_array(2, borrow);
 }
 
-
+// ? returns 1 if y >= x, 0 if y < x ???
 void comparison_MUX(LweSample *comp, const LweSample *x, const LweSample *y, const int32_t nb_bits,
-                    const TFheGateBootstrappingSecretKeySet *keyset) {
-    const LweParams *in_out_params = keyset->params->in_out_params;
+                    const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
     // carries
     LweSample *carry = new_LweSample_array(2, in_out_params);
-    bootsSymEncrypt(carry, 1, keyset); // first carry initialized to 1
+    bootsCONSTANT(carry, 1, bk); // first carry initialized to 1
     // temps
     LweSample *temp = new_LweSample(in_out_params);
 
     for (int32_t i = 0; i < nb_bits; ++i) {
-        bootsXOR(temp, x + i, y + i, &keyset->cloud); // temp = xi XOR yi
-        bootsMUX(carry + 1, temp, y + i, carry, &keyset->cloud);
-        bootsCOPY(carry, carry + 1, &keyset->cloud);
+        bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
+        bootsMUX(carry + 1, temp, y + i, carry, bk);
+        bootsCOPY(carry, carry + 1, bk);
     }
-    bootsCOPY(comp, carry, &keyset->cloud);
+    bootsCOPY(comp, carry, bk);
 
     delete_LweSample(temp);
     delete_LweSample_array(2, carry);
@@ -228,7 +264,7 @@ int main(int argc, char *argv[]){
 
 	//reads the cloud key from file
     FILE* cloud_key = fopen("cloud.key","rb");
-    TFheGateBootstrappingCloudKeySet* bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
+    const TFheGateBootstrappingCloudKeySet* bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
     fclose(cloud_key);
 
 	//if necessary, the params are inside the key
@@ -245,29 +281,31 @@ int main(int argc, char *argv[]){
     }
     
 
-    // LweSample* sum = new_LweSample_array(numberofbits + 1, in_out_params);;
-    // full_adder(sum, ciphertext1, ciphertext2, numberofbits, key);
-    // //decrypt and rebuild the 32-bit plaintext answer
-    // int32_t int_answer = 0;
-    // for (int i=0; i<numberofbits; i++) {
-    //     int ai = bootsSymDecrypt(&sum[i], key);
-    //     int_answer |= (ai<<i);
-    // }
+    LweSample* sum = new_LweSample_array(numberofbits + 1, in_out_params);;
+    full_adder(sum, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
+    //decrypt and rebuild the 32-bit plaintext answer
+    int32_t int_answer = 0;
+    for (int i=0; i<numberofbits; i++) {
+        int ai = bootsSymDecrypt(&sum[i], key);
+        int_answer |= (ai<<i);
+    }
     
-    // cout << "addition int_answer = " << int_answer << endl;
+    cout << "addition int_answer = " << int_answer << endl;
 
-    // LweSample* difference = new_LweSample_array(numberofbits, in_out_params);;
-    // full_subtractor(difference, ciphertext1, ciphertext2, numberofbits, key);
-    // int_answer = 0;
-    // for (int i=0; i<numberofbits; i++) {
-    //     int ai = bootsSymDecrypt(&difference[i], key);
-    //     int_answer |= (ai<<i);
-    // }
+    LweSample* difference = new_LweSample_array(numberofbits, in_out_params);
+
+    full_subtractor(difference, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
+    // full_subtractor(difference, ciphertext1, ciphertext2, numberofbits, key, bk, in_out_params);
+    int_answer = 0;
+    for (int i=0; i<numberofbits; i++) {
+        int ai = bootsSymDecrypt(&difference[i], key);
+        int_answer |= (ai<<i);
+    }
     
-    // cout << "subtraction int_answer = " << int_answer << endl;
+    cout << "subtraction int_answer = " << int_answer << endl;
 
     LweSample *comp = new_LweSample(in_out_params);
-    comparison_MUX(comp, ciphertext1, ciphertext2, numberofbits, key);
+    comparison_MUX(comp, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
 
     // verification
     {
