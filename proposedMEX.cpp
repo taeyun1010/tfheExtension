@@ -9,6 +9,7 @@
 #include <tfhe/tfhe_io.h>
 #include <cassert>
 #include <time.h>
+#include <mex.h>
 
 #include <pthread.h>
 
@@ -16,7 +17,7 @@
 
 using namespace std;
 
-int bitsize = 0;
+int bitsize = 32;
 
 
 struct tensor{
@@ -401,116 +402,90 @@ LweSample* encryptInteger(int plaintext, TFheGateBootstrappingSecretKeySet* key)
 	return ciphertext;
 }
 
-int main(int argc, char *argv[])
-{
-
-	if(argc!=5)
-	{
-		printf("Usage : ./tensor2 <num1> <num2> <mode> <bitsize>\n");
-		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance\n>");
-		exit(0);
-	}
-/*
-	if(atoi(argv[4])!=16&&atoi(argv[4])!=32&&atoi(argv[4])!=64)
-	{
-		printf("Bitsize should be 16 bits or 32 bits or 64 bits.\n");
-		exit(0);		
-	}
-*/
-	bitsize = atoi(argv[4]);
-
-	// // Key_Creation & Encryption Scheme
-
-	// const int minimum_lambda = 110;
-	// TFheGateBootstrappingParameterSet* params = new_default_gate_bootstrapping_parameters(minimum_lambda);
-
-	// //generate a random key
-	// uint32_t seed[] = { 314, 1592, 657 };
-	// tfhe_random_generator_setSeed(seed,3);
-	// TFheGateBootstrappingSecretKeySet* key = new_random_gate_bootstrapping_secret_keyset(params);
-	// testkey = key;
-	// //export the secret key to file for later use
-	// FILE* secret_key = fopen("secret.key","wb");
-	// export_tfheGateBootstrappingSecretKeySet_toFile(secret_key, key);
-	// fclose(secret_key);
-
-	// //export the cloud key to a file (for the cloud)
-	// FILE* cloud_key = fopen("cloud.key","wb");
-	// export_tfheGateBootstrappingCloudKeySet_toFile(cloud_key, &key->cloud);
-	// fclose(cloud_key);
-
-
-	//reads the secret key from file
-    FILE* secret_key = fopen("secret.key","rb");
-    TFheGateBootstrappingSecretKeySet* key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
-    fclose(secret_key);
-
-	//reads the cloud key from file
-    FILE* cloud_key = fopen("cloud.key","rb");
-    const TFheGateBootstrappingCloudKeySet* bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
-    fclose(cloud_key);
-
-	//if necessary, the params are inside the key
-    const TFheGateBootstrappingParameterSet* params = key->params;
-    const LweParams *in_out_params = params->in_out_params;
-
-
-
-	/** Calculation test **/
-	int a,b;
-	a = atoi(argv[1]);
-	b = atoi(argv[2]);
+//calculate Euclidean distance given two vectors, in encrypted form
+//REQUIRES: requires integer to be passed after it is converted to int32 format
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
+	int *inputvector1 = (int*) mxGetPr(prhs[0]);
+    int *inputvector2 = (int*) mxGetPr(prhs[1]);
+	int *vectorlength = (int*) mxGetPr(prhs[2]);
 	
-	
-	LweSample* t0 = encryptInteger(a, key);
-	LweSample* t1 = encryptInteger(b, key);
+	// cout << "vectorlength = " << *vectorlength << endl;
 
-	// // CipherText Container 	
-	// LweSample *t0 = new_gate_bootstrapping_ciphertext_array(bitsize,params);
-	// LweSample *t1 = new_gate_bootstrapping_ciphertext_array(bitsize,params);
-	
-	// for(int i=0;i<bitsize;i++)
-	// {
-	// 	bootsSymEncrypt(&t0[bitsize-1-i],(a>>i)&0x01,key);
-	// 	bootsSymEncrypt(&t1[bitsize-1-i],(b>>i)&0x01,key);
-	// }
-
-
-	int mode = atoi(argv[3]);
-	printf("\nStarting Calculation...\n");
-	LweSample* Test;
-	if(mode == 1)	Test = CipherAdd(t0,t1,&key->cloud);
-	else if(mode == 2) Test = CipherMul(t0,t1,&key->cloud);
-	else if(mode == 3) Test = CipherSub(t0,t1,&key->cloud);
-	else if(mode == 4) Test = CipherCmp(t0,t1,&key->cloud);
-	else if(mode == 5){
-		LweSample* t2 = encryptInteger(14, key);
-		LweSample* t3 = encryptInteger(56, key);	
+	for (int i =0; i< vectorlength; i++){
+    	// cout << "*inputvector1[i] = " << inputvector1[i] << "\n";
+        // cout << "inputvector2[i] = " << inputvector2[i] << "\n";
+		int plaintext1 = inputvector1[i];
+		int plaintext2 = inputvector2[i];
+		LweSample* ciphertext1 = encryptInteger(plaintext1, key);
+		LweSample* ciphertext2 = encryptInteger(plaintext2, key);	
 		LweSample* array1[] = {t0, t2};
 		LweSample* array2[] = {t1, t3};
 		Test = CipherEuclid(array1,array2,&key->cloud, 2, key);
 		int result = decryptLweSample(Test, key);
 		cout << "result = " << result << endl;
-	}
-	else	exit(0);
-	if(mode < 4)
-	{
-		int result = decryptLweSample(Test, key);
-		cout << "result = " << result << endl;
-		// int Result = 0;
-		// for(int i=0;i<bitsize;i++)
-		// {
-		// 	Result<<=1;
-		// 	Result+=bootsSymDecrypt(&Test[i],key);
-		// }	
-		// printf("Calculation Result : %d\n",Result);
-	}
-	// else
-	// {
-	// 	if(bootsSymDecrypt(Test,key))	printf("It is same value\n");
-	// 	else printf("It is not same value\n");
-	// }
-	/** End of Calculation test **/
-	
+    }
 }
+
+// int main(int argc, char *argv[])
+// {
+
+// 	if(argc!=5)
+// 	{
+// 		printf("Usage : ./tensor2 <num1> <num2> <mode> <bitsize>\n");
+// 		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance\n>");
+// 		exit(0);
+// 	}
+
+// 	bitsize = atoi(argv[4]);
+
+// 	//reads the secret key from file
+//     FILE* secret_key = fopen("secret.key","rb");
+//     TFheGateBootstrappingSecretKeySet* key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
+//     fclose(secret_key);
+
+// 	//reads the cloud key from file
+//     FILE* cloud_key = fopen("cloud.key","rb");
+//     const TFheGateBootstrappingCloudKeySet* bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
+//     fclose(cloud_key);
+
+// 	//if necessary, the params are inside the key
+//     const TFheGateBootstrappingParameterSet* params = key->params;
+//     const LweParams *in_out_params = params->in_out_params;
+
+
+
+// 	/** Calculation test **/
+// 	int a,b;
+// 	a = atoi(argv[1]);
+// 	b = atoi(argv[2]);
+	
+	
+// 	LweSample* t0 = encryptInteger(a, key);
+// 	LweSample* t1 = encryptInteger(b, key);
+
+
+// 	int mode = atoi(argv[3]);
+// 	printf("\nStarting Calculation...\n");
+// 	LweSample* Test;
+// 	if(mode == 1)	Test = CipherAdd(t0,t1,&key->cloud);
+// 	else if(mode == 2) Test = CipherMul(t0,t1,&key->cloud);
+// 	else if(mode == 3) Test = CipherSub(t0,t1,&key->cloud);
+// 	else if(mode == 4) Test = CipherCmp(t0,t1,&key->cloud);
+// 	else if(mode == 5){
+// 		LweSample* t2 = encryptInteger(14, key);
+// 		LweSample* t3 = encryptInteger(56, key);	
+// 		LweSample* array1[] = {t0, t2};
+// 		LweSample* array2[] = {t1, t3};
+// 		Test = CipherEuclid(array1,array2,&key->cloud, 2, key);
+// 		int result = decryptLweSample(Test, key);
+// 		cout << "result = " << result << endl;
+// 	}
+// 	else	exit(0);
+// 	if(mode < 4)
+// 	{
+// 		int result = decryptLweSample(Test, key);
+// 		cout << "result = " << result << endl;
+// 	}
+	
+// }
 
