@@ -352,7 +352,7 @@ LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudK
 //Given two arrays containing ciphertexts, calculate the square of Euclidean distance between them (in encrypted form)
 // REQUIRES: the two input arrays must have the same number of ciphertexts
 // TODO: delete key argument used for debugging
-LweSample* CipherEuclid(LweSample* a[],LweSample* b[],const TFheGateBootstrappingCloudKeySet* EK, int arraylength, TFheGateBootstrappingSecretKeySet* key){
+LweSample* CipherEuclid(vector<LweSample*> a,vector<LweSample*> b,const TFheGateBootstrappingCloudKeySet* EK){
 	int result;
 	LweSample* sum = new_LweSample_array(bitsize, EK->params->in_out_params);
 
@@ -364,29 +364,29 @@ LweSample* CipherEuclid(LweSample* a[],LweSample* b[],const TFheGateBootstrappin
 		// bootsSymEncrypt(&sum[bitsize-1-i],(0>>i)&0x01,key);
 	}
 	// bootsCONSTANT(sum, 0 ,EK);
-	result = decryptLweSample(sum, key);
-	cout << "initial sum result = " << result << endl;
-	for (int i=0; i<arraylength; i++){
+	// result = decryptLweSample(sum, key);
+	// cout << "initial sum result = " << result << endl;
+	for (int i=0; i<a.size(); i++){
 		LweSample* ciphertext1 = a[i];
 		LweSample* ciphertext2 = b[i];
 		LweSample* difference;
 		LweSample* square;	
 		difference = CipherSub(ciphertext1,ciphertext2,EK);
-		result = decryptLweSample(difference, key);
-		cout << "difference result = " << result << endl;
+		// result = decryptLweSample(difference, key);
+		// cout << "difference result = " << result << endl;
 		square = CipherMul(difference,difference,EK);
-		result = decryptLweSample(square, key);
-		cout << "square result = " << result << endl;
+		// result = decryptLweSample(square, key);
+		// cout << "square result = " << result << endl;
 		// LweSample* newsum;
 		sum = CipherAdd(sum, square, EK);
-		result = decryptLweSample(sum, key);
+		// result = decryptLweSample(sum, key);
 		// int Result = 0;
 		// for(int i=0;i<bitsize;i++)
 		// {
 		// 	Result<<=1;
 		// 	Result+=bootsSymDecrypt(&newsum[i],key);
 		// }	
-		cout << "sum result = " << result << endl;
+		// cout << "sum result = " << result << endl;
 	}
 	return sum;
 }
@@ -405,25 +405,41 @@ LweSample* encryptInteger(int plaintext, TFheGateBootstrappingSecretKeySet* key)
 //calculate Euclidean distance given two vectors, in encrypted form
 //REQUIRES: requires integer to be passed after it is converted to int32 format
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
+	//reads the secret key from file
+    FILE* secret_key = fopen("secret.key","rb");
+    TFheGateBootstrappingSecretKeySet* key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
+    fclose(secret_key);
+
+	//reads the cloud key from file
+    FILE* cloud_key = fopen("cloud.key","rb");
+    const TFheGateBootstrappingCloudKeySet* bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
+    fclose(cloud_key);
+
+	//if necessary, the params are inside the key
+    const TFheGateBootstrappingParameterSet* params = key->params;
+    const LweParams *in_out_params = params->in_out_params;
+
 	int *inputvector1 = (int*) mxGetPr(prhs[0]);
     int *inputvector2 = (int*) mxGetPr(prhs[1]);
 	int *vectorlength = (int*) mxGetPr(prhs[2]);
 	
 	// cout << "vectorlength = " << *vectorlength << endl;
+	vector<LweSample*> vector1, vector2;
 
-	for (int i =0; i< vectorlength; i++){
+	for (int i =0; i< *vectorlength; i++){
     	// cout << "*inputvector1[i] = " << inputvector1[i] << "\n";
         // cout << "inputvector2[i] = " << inputvector2[i] << "\n";
 		int plaintext1 = inputvector1[i];
 		int plaintext2 = inputvector2[i];
 		LweSample* ciphertext1 = encryptInteger(plaintext1, key);
-		LweSample* ciphertext2 = encryptInteger(plaintext2, key);	
-		LweSample* array1[] = {t0, t2};
-		LweSample* array2[] = {t1, t3};
-		Test = CipherEuclid(array1,array2,&key->cloud, 2, key);
-		int result = decryptLweSample(Test, key);
-		cout << "result = " << result << endl;
+		LweSample* ciphertext2 = encryptInteger(plaintext2, key);
+		vector1.push_back(ciphertext1);
+		vector2.push_back(ciphertext2);
     }
+
+	LweSample* distance = CipherEuclid(vector1,vector2,&key->cloud);
+	int result = decryptLweSample(distance, key);
+	cout << "result = " << result << endl;
 }
 
 // int main(int argc, char *argv[])
