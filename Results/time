@@ -1,0 +1,18 @@
+Under the setting
+n_bands=8;
+h_bands=20;
+n_arcs=1;
+h_radius=12;
+h_lato=h_radius+(n_bands*h_bands*2)+16;
+if mod(h_lato,2)==0
+    h_lato=h_lato-1;
+end
+n_sectors=n_bands*n_arcs;
+matrice=zeros(h_lato);
+for ii=1:(h_lato*h_lato)
+    matrice(ii)=whichsector(ii);
+end
+num_disk=2;
+
+
+to calculate 2-norm distance between vectors having 16 32bit integers, it took 1572.63 seconds using naive implementation of CyperEulcid without utilizing threads.

@@ -9,6 +9,7 @@
 #include <tfhe/tfhe_io.h>
 #include <cassert>
 #include <time.h>
+#include <ctime>
 #include <mex.h>
 
 #include <pthread.h>
@@ -351,7 +352,6 @@ LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudK
 
 //Given two arrays containing ciphertexts, calculate the square of Euclidean distance between them (in encrypted form)
 // REQUIRES: the two input arrays must have the same number of ciphertexts
-// TODO: delete key argument used for debugging
 LweSample* CipherEuclid(vector<LweSample*> a,vector<LweSample*> b,const TFheGateBootstrappingCloudKeySet* EK){
 	int result;
 	LweSample* sum = new_LweSample_array(bitsize, EK->params->in_out_params);
@@ -437,7 +437,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		vector2.push_back(ciphertext2);
     }
 
+	clock_t begin = clock();
 	LweSample* distance = CipherEuclid(vector1,vector2,&key->cloud);
+	clock_t end = clock();
+	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	cout << "elapsed_secs = " << elapsed_secs << endl;
 	int result = decryptLweSample(distance, key);
 	cout << "result = " << result << endl;
 }

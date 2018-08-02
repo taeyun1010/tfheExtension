@@ -9,6 +9,7 @@
 #include <tfhe/tfhe_io.h>
 #include <cassert>
 #include <time.h>
+#include <thread>
 
 #include <pthread.h>
 
@@ -348,12 +349,35 @@ LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudK
         return Container[2*bin-2];
 }
 
+//helper for CipherEuclid to execute that concurrently
+//TODO: delete key argument
+void CipherEuclidHelper(vector<LweSample*> squares, LweSample* ciphertext1, LweSample* ciphertext2, const TFheGateBootstrappingCloudKeySet* EK, TFheGateBootstrappingSecretKeySet* key){
+	LweSample* difference;
+	LweSample* square;	
+	difference = CipherSub(ciphertext1,ciphertext2,EK);
+	square = CipherMul(difference,difference,EK);
+	int result = decryptLweSample(square, key);
+	cout << "square result = " << result << endl;
+	squares.push_back(square);
+}
+
+void f1(int n)
+{
+    for (int i = 0; i < 5; ++i) {
+        std::cout << "Thread 1 executing\n";
+        ++n;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+//version that uses threads
 //Given two arrays containing ciphertexts, calculate the square of Euclidean distance between them (in encrypted form)
 // REQUIRES: the two input arrays must have the same number of ciphertexts
-// TODO: delete key argument used for debugging
-LweSample* CipherEuclid(LweSample* a[],LweSample* b[],const TFheGateBootstrappingCloudKeySet* EK, int arraylength, TFheGateBootstrappingSecretKeySet* key){
+//TODO: delete key argument
+LweSample* CipherEuclid(vector<LweSample*> a,vector<LweSample*> b,const TFheGateBootstrappingCloudKeySet* EK,TFheGateBootstrappingSecretKeySet* key){
 	int result;
 	LweSample* sum = new_LweSample_array(bitsize, EK->params->in_out_params);
+	vector<thread> threads;
 
 	//initialize sum to 0, using cloud key
 	for(int i=0;i<bitsize;i++)
@@ -363,32 +387,95 @@ LweSample* CipherEuclid(LweSample* a[],LweSample* b[],const TFheGateBootstrappin
 		// bootsSymEncrypt(&sum[bitsize-1-i],(0>>i)&0x01,key);
 	}
 	// bootsCONSTANT(sum, 0 ,EK);
-	result = decryptLweSample(sum, key);
-	cout << "initial sum result = " << result << endl;
-	for (int i=0; i<arraylength; i++){
+	// result = decryptLweSample(sum, key);
+	// cout << "initial sum result = " << result << endl;
+	
+	vector<LweSample*> squares;
+
+	for (int i=0; i<a.size(); i++){
 		LweSample* ciphertext1 = a[i];
 		LweSample* ciphertext2 = b[i];
-		LweSample* difference;
-		LweSample* square;	
-		difference = CipherSub(ciphertext1,ciphertext2,EK);
-		result = decryptLweSample(difference, key);
-		cout << "difference result = " << result << endl;
-		square = CipherMul(difference,difference,EK);
-		result = decryptLweSample(square, key);
-		cout << "square result = " << result << endl;
-		// LweSample* newsum;
-		sum = CipherAdd(sum, square, EK);
-		result = decryptLweSample(sum, key);
+		// LweSample* difference;
+		// LweSample* square;	
+
+		// std::thread thisthread(CipherEuclidHelper, squares, ciphertext1, ciphertext2, EK);
+		// std::thread thisthread(f1, n+1);
+		// thread thisthread = thread(CipherEuclidHelper, squares, ciphertext1, ciphertext2, EK);
+		
+		threads.push_back(thread(CipherEuclidHelper, squares, ciphertext1, ciphertext2, EK, key));
+		// difference = CipherSub(ciphertext1,ciphertext2,EK);
+		// // result = decryptLweSample(difference, key);
+		// // cout << "difference result = " << result << endl;
+		// square = CipherMul(difference,difference,EK);
+		// // result = decryptLweSample(square, key);
+		// // cout << "square result = " << result << endl;
+		// // LweSample* newsum;
+		// sum = CipherAdd(sum, square, EK);
+		// result = decryptLweSample(sum, key);
 		// int Result = 0;
 		// for(int i=0;i<bitsize;i++)
 		// {
 		// 	Result<<=1;
 		// 	Result+=bootsSymDecrypt(&newsum[i],key);
 		// }	
+		// cout << "sum result = " << result << endl;
+	}
+
+	for(int i=0; i<threads.size(); i++){
+		threads[i].join();
+	}
+
+	for(int i=0; i<squares.size(); i++){
+		sum = CipherAdd(sum, squares[i], EK);
+		result = decryptLweSample(sum, key);
 		cout << "sum result = " << result << endl;
 	}
+
+
 	return sum;
 }
+
+// //original version that does not use threads
+// //Given two arrays containing ciphertexts, calculate the square of Euclidean distance between them (in encrypted form)
+// // REQUIRES: the two input arrays must have the same number of ciphertexts
+// LweSample* CipherEuclid(vector<LweSample*> a,vector<LweSample*> b,const TFheGateBootstrappingCloudKeySet* EK){
+// 	int result;
+// 	LweSample* sum = new_LweSample_array(bitsize, EK->params->in_out_params);
+
+// 	//initialize sum to 0, using cloud key
+// 	for(int i=0;i<bitsize;i++)
+// 	{
+// 		bootsCONSTANT(sum+i, 0 ,EK);
+	
+// 		// bootsSymEncrypt(&sum[bitsize-1-i],(0>>i)&0x01,key);
+// 	}
+// 	// bootsCONSTANT(sum, 0 ,EK);
+// 	// result = decryptLweSample(sum, key);
+// 	// cout << "initial sum result = " << result << endl;
+// 	for (int i=0; i<a.size(); i++){
+// 		LweSample* ciphertext1 = a[i];
+// 		LweSample* ciphertext2 = b[i];
+// 		LweSample* difference;
+// 		LweSample* square;	
+// 		difference = CipherSub(ciphertext1,ciphertext2,EK);
+// 		// result = decryptLweSample(difference, key);
+// 		// cout << "difference result = " << result << endl;
+// 		square = CipherMul(difference,difference,EK);
+// 		// result = decryptLweSample(square, key);
+// 		// cout << "square result = " << result << endl;
+// 		// LweSample* newsum;
+// 		sum = CipherAdd(sum, square, EK);
+// 		// result = decryptLweSample(sum, key);
+// 		// int Result = 0;
+// 		// for(int i=0;i<bitsize;i++)
+// 		// {
+// 		// 	Result<<=1;
+// 		// 	Result+=bootsSymDecrypt(&newsum[i],key);
+// 		// }	
+// 		// cout << "sum result = " << result << endl;
+// 	}
+// 	return sum;
+// }
 
 //encrypts given integer
 LweSample* encryptInteger(int plaintext, TFheGateBootstrappingSecretKeySet* key){
@@ -399,6 +486,11 @@ LweSample* encryptInteger(int plaintext, TFheGateBootstrappingSecretKeySet* key)
 		bootsSymEncrypt(&ciphertext[bitsize-1-i],(plaintext>>i)&0x01,key);
 	}
 	return ciphertext;
+}
+
+//given a ciphertext, determine its sign, return 1 for negative number, 0 for positive number
+int isNegative(LweSample* ciphertext, const TFheGateBootstrappingCloudKeySet* EK){
+	
 }
 
 int main(int argc, char *argv[])
@@ -484,11 +576,16 @@ int main(int argc, char *argv[])
 	else if(mode == 3) Test = CipherSub(t0,t1,&key->cloud);
 	else if(mode == 4) Test = CipherCmp(t0,t1,&key->cloud);
 	else if(mode == 5){
-		LweSample* t2 = encryptInteger(14, key);
-		LweSample* t3 = encryptInteger(56, key);	
-		LweSample* array1[] = {t0, t2};
-		LweSample* array2[] = {t1, t3};
-		Test = CipherEuclid(array1,array2,&key->cloud, 2, key);
+		vector<LweSample*> vector1, vector2;	
+
+		int plaintext1 = 14;
+		int plaintext2 = 56;
+		LweSample* ciphertext1 = encryptInteger(plaintext1, key);
+		LweSample* ciphertext2 = encryptInteger(plaintext2, key);
+		vector1.push_back(ciphertext1);
+		vector2.push_back(ciphertext2);
+
+		Test = CipherEuclid(vector1,vector2,&key->cloud, key);
 		int result = decryptLweSample(Test, key);
 		cout << "result = " << result << endl;
 	}
