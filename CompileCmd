@@ -11,3 +11,6 @@ g++ -ansi -shared -fPIC -llua5.1 -I/usr/include/lua5.1/ -Wall -O3 -o tensor2lib.
 
 lua5.1
 		in cmd line
+
+
+g++ euclideandistance.cpp tfhedistance.cpp -o euclideandistance -ltfhe-spqlios-fma -std=gnu++11 -lpthread

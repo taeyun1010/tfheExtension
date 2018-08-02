@@ -11,6 +11,7 @@
 #include <tfhe/lweparams.h>
 #include <tfhe/tlwe.h>
 #include <tfhe/tgsw.h>
+#include "tfhedistance.h"
 
 using namespace std;
 
@@ -217,9 +218,17 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
             cout << "y[" << j << "]" << " = " << ai << endl;
     }
     // temps
-    LweSample *temp = new_LweSample_array(nb_bits, in_out_params);
+    // LweSample *temp = new_LweSample_array(nb_bits, in_out_params);
+    const TFheGateBootstrappingParameterSet* params = key->params;
+    LweSample *temp = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
+
+
+
     LweSample *partialsum = new_LweSample_array(nb_bits + 1, in_out_params);
-    
+    for (int j=0; j<nb_bits; j++){
+            ai = bootsSymDecrypt(&partialsum[j], key);
+            cout << "initial partialsum[" << j << "]" << " = " << ai << endl;
+    }
     // for (int i=0; i<numberofbits; i++) {
     //             int ai = bootsSymDecrypt(&product[i], key);
     //             int_answer |= (ai<<i);
@@ -233,9 +242,36 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
             ai = bootsSymDecrypt(&temp[j], key);
             cout << "ai = " << ai << endl;
         }
-        LweSample *temp2 = new_LweSample_array(nb_bits, in_out_params);
-        bootsCOPY(temp2, partialsum, bk);
+        // LweSample *temp2 = new_LweSample_array(nb_bits, in_out_params);
+        LweSample *temp2 = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
+        for (int j=0; j<nb_bits; j++){
+            bootsCOPY(&temp2[j], &partialsum[j], bk);
+        }
+        // bootsCOPY(temp2, partialsum, bk);
+        for (int j=0; j<nb_bits; j++){
+            ai = bootsSymDecrypt(&temp2[j], key);
+            cout << "copied temp2[" << j << "]" << " = " << ai << endl;
+        }
+        for (int j=0; j<nb_bits; j++){
+            ai = bootsSymDecrypt(&temp[j], key);
+            cout << "temp before addition temp[" << j << "]" << " = " << ai << endl;
+        }
+        for (int j=0; j<nb_bits; j++){
+            ai = bootsSymDecrypt(&partialsum[j], key);
+            cout << "partialsum before addition partialsum[" << j << "]" << " = " << ai << endl;
+        }
         full_adder(partialsum, temp, temp2, nb_bits, bk, in_out_params);
+        // for (int j=0; j<nb_bits; j++){
+        //     ai = bootsSymDecrypt(&partialsum[j], key);
+        //     cout << "partialsum[" << j << "]" << " = " << ai << endl;
+        // }
+        int32_t int_answer = 0;
+        for (int j=0; j<numberofbits; j++) {
+            int ai = bootsSymDecrypt(&partialsum[j], key);
+            int_answer |= (ai<<j);
+        }
+        
+        cout << "partialsum int_answer = " << int_answer << endl;
         delete_LweSample_array(nb_bits, temp2);
     }
 
@@ -245,6 +281,106 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
     delete_LweSample_array(nb_bits, partialsum);
     
 }
+// void *thread_xor(void *arg)
+// {
+// 	struct CalcSet* input = (struct CalcSet*)arg;
+//         bootsXOR(input->r,input->a,input->b,input->EK);
+
+//         pthread_exit((void *)input->r);
+// }
+// void *thread_mux(void *arg)
+// {
+// 	struct CalcSet* input = (struct CalcSet*)arg;
+// 	bootsMUX(input->r,input->a,input->b,input->c,input->EK);
+	
+//         pthread_exit((void *)input->r);
+// }
+// LweSample* CipherAdd(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudKeySet* EK,int minbit) // special Add functions used for Multiplications
+// {
+
+//         LweSample *carry = new_gate_bootstrapping_ciphertext(EK->params);
+//         LweSample *Result = new_gate_bootstrapping_ciphertext_array(numberofbits,EK->params);
+
+// 	pthread_t thread[2];
+//         struct CalcSet *in[2];
+
+
+// 	for(int i= numberofbits-1; i>minbit ; i--)
+// 	{
+// 		bootsCOPY(&Result[i],&a[i],EK);
+// 	}
+
+//         for(int i= minbit ; i >= 0 ; i--)
+//         {
+//                 if(i == minbit)
+//                 {
+//                         bootsAND(carry,&a[i],&b[i],EK);
+//                         bootsXOR(&Result[i],&a[i],&b[i],EK);
+//                 }
+//                 else
+//                 {
+
+// 			for(int num =0 ; num<2; num++)  in[num]= (struct CalcSet*)malloc(sizeof(struct CalcSet));
+
+//                         LweSample *b1;
+//                         b1 = new_gate_bootstrapping_ciphertext(EK->params);
+//                         bootsXOR(b1,&a[i],&b[i],EK);
+
+// 			LweSample *b2 = new_gate_bootstrapping_ciphertext(EK->params);
+//                         bootsCOPY(b2,carry,EK);
+
+//                         in[0]->r = &Result[i];
+//                         in[0]->a = b1;
+//                         in[0]->b = b2;
+//                         in[0]->EK= EK;
+
+//                         in[1]->r = carry;
+//                         in[1]->a = b1;
+//                         in[1]->b = b2;
+//                         in[1]->c = &a[i];
+//                         in[1]->EK= EK;
+
+//                         pthread_create(&thread[0],NULL,&thread_xor,(void*)in[0]);
+//                         pthread_create(&thread[1],NULL,&thread_mux,(void*)in[1]);
+
+//                         pthread_join(thread[0],(void **)&b1);
+//                         pthread_join(thread[1],(void **)&b2);
+
+
+//                         //bootsXOR(&Result[i],b1,carry,EK);
+//                         //bootsMUX(carry,b1,carry,&a[i],EK);
+//                 }
+//         }
+//         return Result;
+// }
+
+// void *thread_adder(void *arg)
+// {
+//         struct CipherSet* input = (struct CipherSet*)arg;
+
+
+//         LweSample* Ret = CipherAdd(input->a,input->b,input->EK,input->minbit);
+
+// 	pthread_exit((void *)Ret);
+// }
+
+// void *thread_initializer(void *arg)
+// {
+// 	struct MulInitSet* input = (struct MulInitSet*)arg;
+	
+// 	input->C = new_gate_bootstrapping_ciphertext_array(numberofbits,input->EK->params);
+// 	for(int i=input->ind;i<numberofbits;i++)	bootsAND(&input->C[i-input->ind],&input->a[numberofbits-1-input->ind],&input->b[i],input->EK);	
+// 	for(int i=numberofbits-input->ind;i<numberofbits;i++)	bootsCONSTANT(&input->C[i],0,input->EK);
+// 	pthread_exit((void *)input->C);
+// }
+// void *zero_initializer(void *arg)
+// {
+//         struct MulInitSet* input = (struct MulInitSet*)arg;
+
+//         input->C = new_gate_bootstrapping_ciphertext_array(numberofbits,input->EK->params);
+//         for(int i=0;i<numberofbits;i++)     bootsCONSTANT(&input->C[i],0,input->EK);
+//         pthread_exit((void *)input->C);
+// }
 
 // LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudKeySet* EK)	// O(2*n) algorithm = about 
 // {
@@ -313,103 +449,115 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
 //EXPORT void tfhe_bootstrapFFT(LweSample* result, const LweBootstrappingKeyFFT* bk, Torus32 mu1, Torus32 mu0, const LweSample* x);
 
 
-int main(int argc, char *argv[]){
-    if(argc!=4){
-		printf("Usage : ./filename <num1> <num2> <mode>\n");
-        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparision\n>");
-		exit(0);
-	}
+// int main(int argc, char *argv[]){
+//     if(argc!=4){
+// 		printf("Usage : ./filename <num1> <num2> <mode>\n");
+//         printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparision\n>");
+// 		exit(0);
+// 	}
 
-    //reads the secret key from file
-    FILE* secret_key = fopen("secret.key","rb");
-    TFheGateBootstrappingSecretKeySet* key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
-    fclose(secret_key);
+//     //reads the secret key from file
+//     FILE* secret_key = fopen("secret.key","rb");
+//     TFheGateBootstrappingSecretKeySet* key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
+//     fclose(secret_key);
 
-	//reads the cloud key from file
-    FILE* cloud_key = fopen("cloud.key","rb");
-    const TFheGateBootstrappingCloudKeySet* bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
-    fclose(cloud_key);
+// 	//reads the cloud key from file
+//     FILE* cloud_key = fopen("cloud.key","rb");
+//     const TFheGateBootstrappingCloudKeySet* bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
+//     fclose(cloud_key);
 
-	//if necessary, the params are inside the key
-    const TFheGateBootstrappingParameterSet* params = key->params;
-    const LweParams *in_out_params = params->in_out_params;
-    int32_t arg1,arg2,arg3;
-	arg1 = atoi(argv[1]);
-	arg2 = atoi(argv[2]);
-    arg3 = atoi(argv[3]);
-    LweSample *ciphertext1 = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
-	LweSample *ciphertext2 = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
-    for (int i=0; i<numberofbits; i++) {
-        bootsSymEncrypt(&ciphertext1[i], (arg1>>i)&1, key);
-        bootsSymEncrypt(&ciphertext2[i], (arg2>>i)&1, key);
-    }
-    switch(arg3){
-        case 1:{
-            LweSample* sum = new_LweSample_array(numberofbits + 1, in_out_params);
-            full_adder(sum, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
-            //decrypt and rebuild the 32-bit plaintext answer
-            int32_t int_answer = 0;
-            for (int i=0; i<numberofbits; i++) {
-                int ai = bootsSymDecrypt(&sum[i], key);
-                int_answer |= (ai<<i);
-            }
+// 	//if necessary, the params are inside the key
+//     const TFheGateBootstrappingParameterSet* params = key->params;
+//     const LweParams *in_out_params = params->in_out_params;
+//     int32_t arg1,arg2,arg3;
+// 	arg1 = atoi(argv[1]);
+// 	arg2 = atoi(argv[2]);
+//     arg3 = atoi(argv[3]);
+//     LweSample *ciphertext1 = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
+// 	LweSample *ciphertext2 = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
+//     for (int i=0; i<numberofbits; i++) {
+//         bootsSymEncrypt(&ciphertext1[i], (arg1>>i)&1, key);
+//         bootsSymEncrypt(&ciphertext2[i], (arg2>>i)&1, key);
+//     }
+//     switch(arg3){
+//         case 1:{
+//             LweSample* sum = new_LweSample_array(numberofbits + 1, in_out_params);
+//             full_adder(sum, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
+//             //decrypt and rebuild the 32-bit plaintext answer
+//             int32_t int_answer = 0;
+//             for (int i=0; i<numberofbits; i++) {
+//                 int ai = bootsSymDecrypt(&sum[i], key);
+//                 int_answer |= (ai<<i);
+//             }
             
-            cout << "addition int_answer = " << int_answer << endl;
-            break;
-        }
-        case 2:{
-            LweSample* product = new_LweSample_array(numberofbits, in_out_params);
-            full_multiplicator(product, ciphertext1, ciphertext2, numberofbits,bk, in_out_params, key);
-            //decrypt and rebuild the 32-bit plaintext answer
-            int32_t int_answer = 0;
-            for (int i=0; i<numberofbits; i++) {
-                int ai = bootsSymDecrypt(&product[i], key);
-                int_answer |= (ai<<i);
-            }
+//             cout << "addition int_answer = " << int_answer << endl;
+//             break;
+//         }
+//         case 2:{
+//             // LweSample* product = new_LweSample_array(numberofbits, in_out_params);
+//             // full_multiplicator(product, ciphertext1, ciphertext2, numberofbits,bk, in_out_params, key);
+//             // //decrypt and rebuild the 32-bit plaintext answer
+//             // int32_t int_answer = 0;
+//             // for (int i=0; i<numberofbits; i++) {
+//             //     int ai = bootsSymDecrypt(&product[i], key);
+//             //     int_answer |= (ai<<i);
+//             // }
             
-            cout << "multiplication int_answer = " << int_answer << endl;
-            break;
-        }
-        case 3:{
-            LweSample* difference = new_LweSample_array(numberofbits, in_out_params);
+//             // cout << "multiplication int_answer = " << int_answer << endl;
 
-            full_subtractor(difference, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
-            // full_subtractor(difference, ciphertext1, ciphertext2, numberofbits, key, bk, in_out_params);
-            int32_t int_answer = 0;
-            for (int i=0; i<numberofbits; i++) {
-                int ai = bootsSymDecrypt(&difference[i], key);
-                int_answer |= (ai<<i);
-            }
+
+//             //
+//             LweSample* product = CipherMul(ciphertext1,ciphertext2,&key->cloud);
+//             int32_t int_answer = 0;
+//             for (int i=0; i<numberofbits; i++) {
+//                 int ai = bootsSymDecrypt(&product[i], key);
+//                 int_answer |= (ai<<i);
+//             }
             
-            cout << "subtraction int_answer = " << int_answer << endl;
-            break;
-        }
-        case 4:{
-            LweSample *comp = new_LweSample(in_out_params);
-            comparison_MUX(comp, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
+//             cout << "multiplication int_answer = " << int_answer << endl;
 
-            // verification
-            {
-                // bool messCarry = 1;
-                // for (int32_t i = 0; i < numberofbits; ++i) {
-                //     bool messX = bootsSymDecrypt(x + i, key);
-                //     bool messY = bootsSymDecrypt(y + i, key);
+//             break;
+//         }
+//         case 3:{
+//             LweSample* difference = new_LweSample_array(numberofbits, in_out_params);
 
-                //     messCarry = (messX ^ messY) ? messY : messCarry;
-                // }
-                bool messComp = bootsSymDecrypt(comp, key);
-                cout << "messComp = " << messComp << endl;
-                // if (messComp != messCarry) {
-                //     cout << "ERROR!!! " << trial << "," << nb_bits << endl;
-                // }
-            }
-            break;
-        }
-    }
+//             full_subtractor(difference, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
+//             // full_subtractor(difference, ciphertext1, ciphertext2, numberofbits, key, bk, in_out_params);
+//             int32_t int_answer = 0;
+//             for (int i=0; i<numberofbits; i++) {
+//                 int ai = bootsSymDecrypt(&difference[i], key);
+//                 int_answer |= (ai<<i);
+//             }
+            
+//             cout << "subtraction int_answer = " << int_answer << endl;
+//             break;
+//         }
+//         case 4:{
+//             LweSample *comp = new_LweSample(in_out_params);
+//             comparison_MUX(comp, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
+
+//             // verification
+//             {
+//                 // bool messCarry = 1;
+//                 // for (int32_t i = 0; i < numberofbits; ++i) {
+//                 //     bool messX = bootsSymDecrypt(x + i, key);
+//                 //     bool messY = bootsSymDecrypt(y + i, key);
+
+//                 //     messCarry = (messX ^ messY) ? messY : messCarry;
+//                 // }
+//                 bool messComp = bootsSymDecrypt(comp, key);
+//                 cout << "messComp = " << messComp << endl;
+//                 // if (messComp != messCarry) {
+//                 //     cout << "ERROR!!! " << trial << "," << nb_bits << endl;
+//                 // }
+//             }
+//             break;
+//         }
+//     }
 
 
 
-}
+// }
 
 
 
