@@ -489,8 +489,7 @@ LweSample* encryptInteger(int plaintext, TFheGateBootstrappingSecretKeySet* key)
 }
 
 //given a ciphertext, determine its absolute value
-// TODO: delete key argument
-LweSample* absoluteValue(LweSample* ciphertext, const TFheGateBootstrappingCloudKeySet* EK, TFheGateBootstrappingSecretKeySet* key){
+LweSample* CipherAbs(LweSample* ciphertext, const TFheGateBootstrappingCloudKeySet* EK){
 	LweSample* mask = new_gate_bootstrapping_ciphertext_array(bitsize, EK->params);
 	LweSample* result = new_gate_bootstrapping_ciphertext_array(bitsize, EK->params);
 
@@ -505,19 +504,51 @@ LweSample* absoluteValue(LweSample* ciphertext, const TFheGateBootstrappingCloud
 	for (int i=0; i<bitsize; i++){
 		bootsXOR(result+i, sum+i, mask+i, EK);
 	}
-	// int decryptedbit;
-	// for(int i=0;i<bitsize;i++)
-	// {
-	// 	decryptedbit = bootsSymDecrypt(&mask[i],key);
-	// 	cout << "decryptedbit = " << decryptedbit << endl;
-	// 	int result = decryptLweSample(mask, key);
-	// 	cout << "mask = " << result << endl;
-	// }	
 
-	int decryptedresult = decryptLweSample(result, key);
-	cout << "result = " << decryptedresult << endl;
 	return result;
 
+}
+
+//original version that does not use threads
+//Given two arrays containing ciphertexts, calculate the one norm distance between them (in encrypted form)
+// REQUIRES: the two input arrays must have the same number of ciphertexts
+LweSample* CipherOneNorm(vector<LweSample*> a,vector<LweSample*> b,const TFheGateBootstrappingCloudKeySet* EK){
+	int result;
+	LweSample* sum = new_LweSample_array(bitsize, EK->params->in_out_params);
+
+	//initialize sum to 0, using cloud key
+	for(int i=0;i<bitsize;i++)
+	{
+		bootsCONSTANT(sum+i, 0 ,EK);
+	
+		// bootsSymEncrypt(&sum[bitsize-1-i],(0>>i)&0x01,key);
+	}
+	// bootsCONSTANT(sum, 0 ,EK);
+	// result = decryptLweSample(sum, key);
+	// cout << "initial sum result = " << result << endl;
+	for (int i=0; i<a.size(); i++){
+		LweSample* ciphertext1 = a[i];
+		LweSample* ciphertext2 = b[i];
+		LweSample* difference;
+		LweSample* abs;	
+		difference = CipherSub(ciphertext1,ciphertext2,EK);
+		// result = decryptLweSample(difference, key);
+		// cout << "difference result = " << result << endl;
+		abs = CipherAbs(difference,EK);
+		// result = decryptLweSample(square, key);
+		// cout << "square result = " << result << endl;
+		// LweSample* newsum;
+		sum = CipherAdd(sum, abs, EK);
+		// result = decryptLweSample(sum, key);
+		// int Result = 0;
+		// for(int i=0;i<bitsize;i++)
+		// {
+		// 	Result<<=1;
+		// 	Result+=bootsSymDecrypt(&newsum[i],key);
+		// }	
+		// cout << "sum result = " << result << endl;
+	}
+	return sum;
 }
 
 int main(int argc, char *argv[])
@@ -526,7 +557,7 @@ int main(int argc, char *argv[])
 	if(argc!=5)
 	{
 		printf("Usage : ./tensor2 <num1> <num2> <mode> <bitsize>\n");
-		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance \n6) Absolute value \n>");
+		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance \n6) Absolute value \n7) One norm distance\n>");
 		exit(0);
 	}
 /*
@@ -622,7 +653,27 @@ int main(int argc, char *argv[])
 		// 	int bit =bootsSymDecrypt(&t0[i],key);
 		// 	cout << "bit = " << bit << endl;
 		// }
-		absoluteValue(t0, &key->cloud, key);
+		CipherAbs(t0, &key->cloud);
+	}
+	else if(mode == 7){
+		vector<LweSample*> vector1, vector2;	
+
+		int plaintext1 = 97;
+		int plaintext2 = 56;
+		int plaintext3 = 1265;
+		int plaintext4 = 3472;
+		LweSample* ciphertext1 = encryptInteger(plaintext1, key);
+		LweSample* ciphertext2 = encryptInteger(plaintext2, key);
+		LweSample* ciphertext3 = encryptInteger(plaintext3, key);
+		LweSample* ciphertext4 = encryptInteger(plaintext4, key);
+		vector1.push_back(ciphertext1);
+		vector2.push_back(ciphertext2);
+		vector1.push_back(ciphertext3);
+		vector2.push_back(ciphertext4);
+
+		Test = CipherOneNorm(vector1, vector2, &key->cloud);
+		int result = decryptLweSample(Test, key);
+		cout << "result = " << result << endl;
 	}
 	else	exit(0);
 	if(mode < 4)
