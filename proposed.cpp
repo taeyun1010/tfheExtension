@@ -19,6 +19,9 @@ using namespace std;
 
 int bitsize = 0;
 
+// these are number of bits used for representing Double struct
+int integerbitsize = 0;
+int fractionbitsize = 0;
 
 struct tensor{
 	double var;
@@ -44,6 +47,10 @@ struct CalcSet{
 	LweSample *b;
 	LweSample *c;
 	const TFheGateBootstrappingCloudKeySet* EK;
+};
+struct Double{
+	LweSample *integerpart;
+	LweSample *fractionpart;
 };
 TFheGateBootstrappingSecretKeySet* testkey;
 int V = 0;
@@ -79,6 +86,30 @@ int decryptLweSample(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
 	}	
 	return Result;
 }
+
+// decrypts given integer part of Double struct
+int decryptIntegerpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
+	int Result = 0;
+	for(int i=0;i<integerbitsize;i++)
+	{
+		Result<<=1;
+		Result+=bootsSymDecrypt(&input[i],key);
+	}	
+	return Result;
+}
+
+// decrypts given fractional part of Double struct
+double decryptFractionpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
+	double result = 0;
+	for(int i=0;i<fractionbitsize;i++)
+	{
+		int temp = bootsSymDecrypt(&input[i],key);
+		cout << "temp[" << i << "] = " << temp << endl;
+		result += temp * (pow(2, -(i+1)));
+	}	
+	return result;
+}
+
 LweSample* CipherCmp(LweSample *a,LweSample *b,const TFheGateBootstrappingCloudKeySet* EK)
 {
 	LweSample *Tmp = new_gate_bootstrapping_ciphertext(EK->params);
@@ -488,6 +519,74 @@ LweSample* encryptInteger(int plaintext, TFheGateBootstrappingSecretKeySet* key)
 	return ciphertext;
 }
 
+
+template <class T>
+int numDigits(T number)
+{
+    int digits = 0;
+    if (number < 0) digits = 1; // remove this line if '-' counts as a digit
+    while (number) {
+        number /= 10;
+        digits++;
+    }
+    return digits;
+}
+
+//encrypts given integer part of Double
+// ciphertext[0] holds least significant bit
+// ciphertext[integerbitsize-1] holds the most significant bit 
+LweSample* encryptIntegerpart(int plaintext, TFheGateBootstrappingSecretKeySet* key){
+	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(integerbitsize,key->params);
+	
+	for(int i=0;i<integerbitsize;i++)
+	{
+		bootsSymEncrypt(&ciphertext[integerbitsize-1-i],(plaintext>>i)&0x01,key);
+		
+		// //
+		// int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+		// cout << "integerpart[" << i << "] = " << temp << endl;
+		// //
+	}
+	return ciphertext;
+}
+
+//encrypts given fractional part, where argument plaintext is given as 41 if integer was 124.41
+LweSample* encryptFractionpart(int plaintext, TFheGateBootstrappingSecretKeySet* key){
+	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
+	int numdigitsbefore, numdigitsafter;
+	for(int i=0;i<fractionbitsize;i++)
+	{
+		cout << "plaintext = " << plaintext << endl;
+		numdigitsbefore = numDigits(plaintext);
+		plaintext = plaintext * 2;
+		numdigitsafter = numDigits(plaintext);
+		if (numdigitsafter > numdigitsbefore){
+			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],1,key);
+			bootsSymEncrypt(&ciphertext[i],1,key);
+			
+			//
+			int temp = bootsSymDecrypt(&ciphertext[i], key);
+			cout << "fractionpart[" << i << "] = " << temp << endl;
+			//
+			
+			//get rid of the leading digit
+			plaintext = plaintext - pow(10,(numdigitsafter-1));
+		}
+		else {
+			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],0,key);
+			bootsSymEncrypt(&ciphertext[i],0,key);
+		
+			//
+			int temp = bootsSymDecrypt(&ciphertext[i], key);
+			cout << "fractionpart[" << i << "] = " << temp << endl;
+			//
+		
+		}
+		// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],(plaintext>>i)&0x01,key);
+	}
+	return ciphertext;
+}
+
 //given a ciphertext, determine its absolute value
 LweSample* CipherAbs(LweSample* ciphertext, const TFheGateBootstrappingCloudKeySet* EK){
 	LweSample* mask = new_gate_bootstrapping_ciphertext_array(bitsize, EK->params);
@@ -554,10 +653,10 @@ LweSample* CipherOneNorm(vector<LweSample*> a,vector<LweSample*> b,const TFheGat
 int main(int argc, char *argv[])
 {
 
-	if(argc!=5)
+	if(argc!=7)
 	{
-		printf("Usage : ./tensor2 <num1> <num2> <mode> <bitsize>\n");
-		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance \n6) Absolute value \n7) One norm distance\n>");
+		printf("Usage : ./tensor2 <num1> <num2> <mode> <bitsize> <integerbitsize> <fractionbitsize>\n");
+		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance \n6) Absolute value \n7) One norm distance\n 8) double addition\n>");
 		exit(0);
 	}
 /*
@@ -568,6 +667,8 @@ int main(int argc, char *argv[])
 	}
 */
 	bitsize = atoi(argv[4]);
+	integerbitsize = atoi(argv[5]);
+	fractionbitsize = atoi(argv[6]);
 
 	// // Key_Creation & Encryption Scheme
 
@@ -674,6 +775,19 @@ int main(int argc, char *argv[])
 		Test = CipherOneNorm(vector1, vector2, &key->cloud);
 		int result = decryptLweSample(Test, key);
 		cout << "result = " << result << endl;
+	}
+	else if(mode == 8){
+		// double testdouble = 256.128;
+		LweSample *integerpart = new_gate_bootstrapping_ciphertext_array(bitsize,params);
+		LweSample *fractionpart = new_gate_bootstrapping_ciphertext_array(bitsize,params);
+		Double temp;
+		integerpart = encryptIntegerpart(256, key);
+		// fractionpart = encryptFractionpart(128, key);
+		fractionpart = encryptFractionpart(26, key);
+		int result = decryptIntegerpart(integerpart, key);
+		cout << "integerpart decrypted result = " << result << endl;
+		double fractionresult = decryptFractionpart(fractionpart, key);
+		cout << "fractionpart decrypted result = " << fractionresult << endl;
 	}
 	else	exit(0);
 	if(mode < 4)
