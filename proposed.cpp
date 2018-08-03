@@ -488,9 +488,36 @@ LweSample* encryptInteger(int plaintext, TFheGateBootstrappingSecretKeySet* key)
 	return ciphertext;
 }
 
-//given a ciphertext, determine its sign, return 1 for negative number, 0 for positive number
-int isNegative(LweSample* ciphertext, const TFheGateBootstrappingCloudKeySet* EK){
-	
+//given a ciphertext, determine its absolute value
+// TODO: delete key argument
+LweSample* absoluteValue(LweSample* ciphertext, const TFheGateBootstrappingCloudKeySet* EK, TFheGateBootstrappingSecretKeySet* key){
+	LweSample* mask = new_gate_bootstrapping_ciphertext_array(bitsize, EK->params);
+	LweSample* result = new_gate_bootstrapping_ciphertext_array(bitsize, EK->params);
+
+	for(int i=0;i<bitsize;i++)
+	{
+		// mask[i] = ciphertext[0];
+		bootsCOPY(mask+i, ciphertext, EK);
+	}
+
+	LweSample* sum = CipherAdd(ciphertext,mask,EK);
+
+	for (int i=0; i<bitsize; i++){
+		bootsXOR(result+i, sum+i, mask+i, EK);
+	}
+	// int decryptedbit;
+	// for(int i=0;i<bitsize;i++)
+	// {
+	// 	decryptedbit = bootsSymDecrypt(&mask[i],key);
+	// 	cout << "decryptedbit = " << decryptedbit << endl;
+	// 	int result = decryptLweSample(mask, key);
+	// 	cout << "mask = " << result << endl;
+	// }	
+
+	int decryptedresult = decryptLweSample(result, key);
+	cout << "result = " << decryptedresult << endl;
+	return result;
+
 }
 
 int main(int argc, char *argv[])
@@ -499,7 +526,7 @@ int main(int argc, char *argv[])
 	if(argc!=5)
 	{
 		printf("Usage : ./tensor2 <num1> <num2> <mode> <bitsize>\n");
-		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance\n>");
+		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance \n6) Absolute value \n>");
 		exit(0);
 	}
 /*
@@ -588,6 +615,14 @@ int main(int argc, char *argv[])
 		Test = CipherEuclid(vector1,vector2,&key->cloud, key);
 		int result = decryptLweSample(Test, key);
 		cout << "result = " << result << endl;
+	}
+	else if(mode == 6){
+		// for(int i=0;i<bitsize;i++)
+		// {
+		// 	int bit =bootsSymDecrypt(&t0[i],key);
+		// 	cout << "bit = " << bit << endl;
+		// }
+		absoluteValue(t0, &key->cloud, key);
 	}
 	else	exit(0);
 	if(mode < 4)
