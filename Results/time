@@ -16,3 +16,6 @@ num_disk=2;
 
 
 to calculate 2-norm distance between vectors having 16 32bit integers, it took 1572.63 seconds using naive implementation of CyperEulcid without utilizing threads.
+
+to calculate 1-norm distance between vectors having 16 32bit integers, it took 256.342 seconds using naive implementation of CyperOneNorm without utilizing threads.
+

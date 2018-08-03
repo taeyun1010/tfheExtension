@@ -502,7 +502,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
     }
 
 	clock_t begin = clock();
-	LweSample* distance = CipherEuclid(vector1,vector2,&key->cloud);
+	LweSample* distance = CipherOneNorm(vector1,vector2,&key->cloud);
 	clock_t end = clock();
 	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	cout << "elapsed_secs = " << elapsed_secs << endl;
