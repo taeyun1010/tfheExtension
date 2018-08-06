@@ -550,17 +550,57 @@ LweSample* encryptIntegerpart(int plaintext, TFheGateBootstrappingSecretKeySet* 
 	return ciphertext;
 }
 
+// //when plaintext is given as integer type e.g) 124 , is not working
+// //encrypts given fractional part, where argument plaintext is given as 41 if integer was 124.41
+// LweSample* encryptFractionpart(int plaintext, TFheGateBootstrappingSecretKeySet* key){
+// 	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
+// 	int numdigitsbefore, numdigitsafter;
+// 	for(int i=0;i<fractionbitsize;i++)
+// 	{
+// 		cout << "plaintext = " << plaintext << endl;
+// 		numdigitsbefore = numDigits(plaintext);
+// 		plaintext = plaintext * 2;
+// 		numdigitsafter = numDigits(plaintext);
+// 		if (numdigitsafter > numdigitsbefore){
+// 			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],1,key);
+// 			bootsSymEncrypt(&ciphertext[i],1,key);
+			
+// 			//
+// 			int temp = bootsSymDecrypt(&ciphertext[i], key);
+// 			cout << "fractionpart[" << i << "] = " << temp << endl;
+// 			//
+			
+// 			//get rid of the leading digit
+// 			plaintext = plaintext - pow(10,(numdigitsafter-1));
+// 		}
+// 		else {
+// 			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],0,key);
+// 			bootsSymEncrypt(&ciphertext[i],0,key);
+		
+// 			//
+// 			int temp = bootsSymDecrypt(&ciphertext[i], key);
+// 			cout << "fractionpart[" << i << "] = " << temp << endl;
+// 			//
+		
+// 		}
+// 		// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],(plaintext>>i)&0x01,key);
+// 	}
+// 	return ciphertext;
+// }
+
+
+//when plaintext is given in double type   i.e. 0.xxx
 //encrypts given fractional part, where argument plaintext is given as 41 if integer was 124.41
-LweSample* encryptFractionpart(int plaintext, TFheGateBootstrappingSecretKeySet* key){
+LweSample* encryptFractionpart(double plaintext, TFheGateBootstrappingSecretKeySet* key){
 	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
-	int numdigitsbefore, numdigitsafter;
+	// int numdigitsbefore, numdigitsafter;
 	for(int i=0;i<fractionbitsize;i++)
 	{
 		cout << "plaintext = " << plaintext << endl;
-		numdigitsbefore = numDigits(plaintext);
+		// numdigitsbefore = numDigits(plaintext);
 		plaintext = plaintext * 2;
-		numdigitsafter = numDigits(plaintext);
-		if (numdigitsafter > numdigitsbefore){
+		// numdigitsafter = numDigits(plaintext);
+		if (plaintext >= 1){
 			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],1,key);
 			bootsSymEncrypt(&ciphertext[i],1,key);
 			
@@ -569,8 +609,8 @@ LweSample* encryptFractionpart(int plaintext, TFheGateBootstrappingSecretKeySet*
 			cout << "fractionpart[" << i << "] = " << temp << endl;
 			//
 			
-			//get rid of the leading digit
-			plaintext = plaintext - pow(10,(numdigitsafter-1));
+			//get rid of the leading 1
+			plaintext = plaintext - 1;
 		}
 		else {
 			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],0,key);
@@ -783,7 +823,7 @@ int main(int argc, char *argv[])
 		Double temp;
 		integerpart = encryptIntegerpart(256, key);
 		// fractionpart = encryptFractionpart(128, key);
-		fractionpart = encryptFractionpart(26, key);
+		fractionpart = encryptFractionpart(0.26124, key);
 		int result = decryptIntegerpart(integerpart, key);
 		cout << "integerpart decrypted result = " << result << endl;
 		double fractionresult = decryptFractionpart(fractionpart, key);
