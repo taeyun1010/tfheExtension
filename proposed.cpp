@@ -359,17 +359,16 @@ LweSample* CipherAddDoubleHelper(LweSample* a,LweSample* b,const TFheGateBootstr
 // }
 
 //adds two double, given two Double structs
-// TODO: get rid of key argument
-Double CipherAddDouble(Double input1, Double input2, const TFheGateBootstrappingCloudKeySet* EK, TFheGateBootstrappingSecretKeySet* key)
+Double CipherAddDouble(Double input1, Double input2, const TFheGateBootstrappingCloudKeySet* EK)
 {
 	Double result;
 	LweSample* a = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
 	LweSample* b = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
 
-	//
-	LweSample* c = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
-	LweSample* d = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
-	//
+	// //
+	// LweSample* c = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+	// LweSample* d = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+	// //
 
 
 	for (int i=0; i < integerbitsize; i++){
@@ -380,19 +379,19 @@ Double CipherAddDouble(Double input1, Double input2, const TFheGateBootstrapping
 		bootsCOPY(&a[i],&input1.fractionpart[i-integerbitsize],EK);
 		bootsCOPY(&b[i],&input2.fractionpart[i-integerbitsize],EK);
 
-		//
-		int decryptedbit = bootsSymDecrypt(&a[i],key);
-		cout << "decryptedbit[" << i << "] = " << decryptedbit << endl;
-		//
+		// //
+		// int decryptedbit = bootsSymDecrypt(&a[i],key);
+		// cout << "decryptedbit[" << i << "] = " << decryptedbit << endl;
+		// //
 
 		// bootsCOPY(&c[i],&input1.fractionpart[i-integerbitsize],EK);
 		// bootsCOPY(&d[i],&input2.fractionpart[i-integerbitsize],EK);
 
 	}
-	double decryptedfraction = decryptFractionpart(&a[integerbitsize], key);
-	cout << "decryptedfraction = " << decryptedfraction << endl;
-	double decryptedfraction2 = decryptFractionpart(&b[integerbitsize], key);
-	cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
+	// double decryptedfraction = decryptFractionpart(&a[integerbitsize], key);
+	// cout << "decryptedfraction = " << decryptedfraction << endl;
+	// double decryptedfraction2 = decryptFractionpart(&b[integerbitsize], key);
+	// cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
 	// //
 	// for (int i=0; i < fractionbitsize; i++){
 	// 	bootsCOPY(&c[i],&input1.fractionpart[i],EK);
@@ -417,8 +416,8 @@ Double CipherAddDouble(Double input1, Double input2, const TFheGateBootstrapping
 	// int intsum = decryptIntegerpart(&sum[0], key);
 	// cout << "intsum = " << intsum << endl;
 
-	double temp = decryptFractionpart(&sum[integerbitsize], key);
-	cout << "temp = " << temp << endl;
+	// double temp = decryptFractionpart(&sum[integerbitsize], key);
+	// cout << "temp = " << temp << endl;
 
 	// double temp = decryptFractionpart(result.fractionpart, key);
 	// cout << "temp = " << temp << endl;
@@ -527,6 +526,117 @@ LweSample* CipherSub(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudK
 	}
 	
 	return CipherAdd(a,Arv,EK);
+}
+
+//sub function used for subtraction of Doubles
+LweSample* CipherSubDoubleHelper(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudKeySet* EK)
+{
+	LweSample *carry = new_gate_bootstrapping_ciphertext(EK->params);
+	LweSample *O = new_gate_bootstrapping_ciphertext(EK->params);
+	LweSample *Rev = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+	LweSample *Arv = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+
+	bootsCONSTANT(O,1,EK);
+
+	/** Reversing bits of b **/
+
+	for(int i = 0; i < (integerbitsize + fractionbitsize) ; i++)
+	{
+		bootsNOT(&Rev[i],&b[i],EK);
+	}
+
+	/** Add one to Reversed bit form of b **/
+
+	for(int i = integerbitsize + fractionbitsize-1 ; i >= 0 ; i--)
+	{
+		if(i == integerbitsize + fractionbitsize-1)
+		{
+			bootsAND(carry,&Rev[i],O,EK);
+			bootsXOR(&Arv[i],&Rev[i],O,EK);
+		}
+		else
+		{
+			bootsXOR(&Arv[i],&Rev[i],carry,EK);
+			bootsAND(carry,carry,&Rev[i],EK);
+		}
+	}
+	
+	return CipherAddDoubleHelper(a,Arv,EK);
+}
+
+//subtracts two double, given two Double structs
+Double CipherSubDouble(Double input1, Double input2, const TFheGateBootstrappingCloudKeySet* EK)
+{
+	Double result;
+	LweSample* a = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+	LweSample* b = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+
+	// //
+	// LweSample* c = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+	// LweSample* d = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+	// //
+
+
+	for (int i=0; i < integerbitsize; i++){
+		bootsCOPY(&a[i],&input1.integerpart[i],EK);
+		bootsCOPY(&b[i],&input2.integerpart[i],EK);
+	}
+	for (int i=integerbitsize; i < (integerbitsize + fractionbitsize); i++){
+		bootsCOPY(&a[i],&input1.fractionpart[i-integerbitsize],EK);
+		bootsCOPY(&b[i],&input2.fractionpart[i-integerbitsize],EK);
+
+		// //
+		// int decryptedbit = bootsSymDecrypt(&a[i],key);
+		// cout << "decryptedbit[" << i << "] = " << decryptedbit << endl;
+		// //
+
+		// bootsCOPY(&c[i],&input1.fractionpart[i-integerbitsize],EK);
+		// bootsCOPY(&d[i],&input2.fractionpart[i-integerbitsize],EK);
+
+	}
+	// double decryptedfraction = decryptFractionpart(&a[integerbitsize], key);
+	// cout << "decryptedfraction = " << decryptedfraction << endl;
+	// double decryptedfraction2 = decryptFractionpart(&b[integerbitsize], key);
+	// cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
+	// //
+	// for (int i=0; i < fractionbitsize; i++){
+	// 	bootsCOPY(&c[i],&input1.fractionpart[i],EK);
+	// 	bootsCOPY(&d[i],&input2.fractionpart[i],EK);
+
+	// }
+	// //
+
+
+	LweSample *difference = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,EK->params);
+	// LweSample *sum2 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,EK->params);
+	
+	
+	difference = CipherSubDoubleHelper(a,b, EK);
+
+	// sum2 = CipherAdd(a+integerbitsize,b+integerbitsize, EK);
+
+	
+	result.integerpart = difference;
+	result.fractionpart = difference + integerbitsize; 
+
+	// int intsum = decryptIntegerpart(&sum[0], key);
+	// cout << "intsum = " << intsum << endl;
+
+	// double temp = decryptFractionpart(&sum[integerbitsize], key);
+	// cout << "temp = " << temp << endl;
+
+	// double temp = decryptFractionpart(result.fractionpart, key);
+	// cout << "temp = " << temp << endl;
+
+	// double temp = decryptFractionpart(c+integerbitsize, key);
+	// cout << "temp = " << temp << endl;
+	// temp = decryptFractionpart(d+integerbitsize, key);
+	// cout << "temp = " << temp << endl;
+
+	// double temp = decryptFractionpart(sum2, key);
+	// cout << "temp = " << temp << endl;
+
+	return result;
 }
 
 void *thread_adder(void *arg)
@@ -931,7 +1041,7 @@ int main(int argc, char *argv[])
 	if(argc!=7)
 	{
 		printf("Usage : ./tensor2 <num1> <num2> <mode> <bitsize> <integerbitsize> <fractionbitsize>\n");
-		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance \n6) Absolute value \n7) One norm distance\n 8) double addition\n>");
+		printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n5) Euclidean distance \n6) Absolute value \n7) One norm distance\n 8) double addition\n9) double subtraction\n>");
 		exit(0);
 	}
 /*
@@ -1078,7 +1188,7 @@ int main(int argc, char *argv[])
 		// cout << "decrypted  = " << decrypted << endl;
 
 
-		Double sum = CipherAddDouble(temp1, temp2 , &key->cloud, key);
+		Double sum = CipherAddDouble(temp1, temp2 , &key->cloud);
 		double decryptedsum = decryptDouble(sum, key);
 		cout << "decryptedsum  = " << decryptedsum << endl;
 
@@ -1093,6 +1203,26 @@ int main(int argc, char *argv[])
 		// double fractionresult = decryptFractionpart(&encryptedDouble[integerbitsize], key);
 		// cout << "fractionpart decrypted result = " << fractionresult << endl;
 	
+	}
+	else if(mode == 9){
+		LweSample *integerpart1 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+		LweSample *fractionpart1 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+		LweSample *integerpart2 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+		LweSample *fractionpart2 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+		Double temp1, temp2;
+		integerpart1 = encryptIntegerpart(3, key);
+		fractionpart1 = encryptFractionpart(0.389, key);
+		integerpart2 = encryptIntegerpart(4, key);
+		fractionpart2 = encryptFractionpart(0.735, key);
+		temp1.integerpart = integerpart1;
+		temp1.fractionpart = fractionpart1;
+		temp2.integerpart = integerpart2;
+		temp2.fractionpart = fractionpart2;
+
+
+		Double difference = CipherSubDouble(temp1, temp2 , &key->cloud);
+		double decrypteddifference = decryptDouble(difference, key);
+		cout << "decrypteddifference  = " << decrypteddifference << endl;
 	}
 	else	exit(0);
 	if(mode < 4)
