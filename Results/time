@@ -15,7 +15,75 @@ end
 num_disk=2;
 
 
-to calculate 2-norm distance between vectors having 16 32bit integers, it took 1572.63 seconds using naive implementation of CyperEulcid without utilizing threads.
+to calculate 2-norm distance between vectors having 16 32bit integers, it took 1532.98 seconds using naive implementation of CyperEulcid without utilizing threads.
 
-to calculate 1-norm distance between vectors having 16 32bit integers, it took 256.342 seconds using naive implementation of CyperOneNorm without utilizing threads.
+to calculate 2-norm distance between vectors having 16 10bit integers, it took 266.63 seconds using naive implementation of CyperEulcid without utilizing threads.
+
+to calculate 1-norm distance between vectors having 16 32bit integers, it took 214.601 seconds using naive implementation of CyperOneNorm without utilizing threads.
+
+to calculate 1-norm distance between vectors having 16 10bit integers, it took 65.358 seconds using naive implementation of CyperOneNorm without utilizing threads.
+
+Starting Calculation...
+bitsize = 8
+elapsed secs to calculate 2-norm = 120.381
+result = 0
+bitsize = 9
+elapsed secs to calculate 2-norm = 236.181
+result = 0
+bitsize = 10
+elapsed secs to calculate 2-norm = 266.294
+result = 0
+bitsize = 11
+elapsed secs to calculate 2-norm = 296.244
+result = 0
+bitsize = 12
+elapsed secs to calculate 2-norm = 325.055
+result = 0
+bitsize = 13
+elapsed secs to calculate 2-norm = 350.725
+result = 0
+bitsize = 14
+elapsed secs to calculate 2-norm = 376.229
+result = 0
+bitsize = 15
+elapsed secs to calculate 2-norm = 397.439
+result = 0
+bitsize = 16
+elapsed secs to calculate 2-norm = 414.902
+result = 0
+bitsize = 17
+elapsed secs to calculate 2-norm = 804.734
+result = 0
+bitsize = 18
+elapsed secs to calculate 2-norm = 872.052
+result = 0
+bitsize = 19
+elapsed secs to calculate 2-norm = 924.886
+result = 0
+bitsize = 20
+elapsed secs to calculate 2-norm = 986.158
+result = 0
+bitsize = 21
+elapsed secs to calculate 2-norm = 1044.18
+result = 0
+bitsize = 22
+elapsed secs to calculate 2-norm = 1098.22
+result = 0
+bitsize = 23
+elapsed secs to calculate 2-norm = 1149.7
+result = 0
+bitsize = 24
+elapsed secs to calculate 2-norm = 1202.66
+result = 0
+bitsize = 25
+elapsed secs to calculate 2-norm = 1252.82
+result = 0
+bitsize = 26
+elapsed secs to calculate 2-norm = 1301.67
+result = 3
+bitsize = 27
+elapsed secs to calculate 2-norm = 1347.84
+result = 3
+bitsize = 28
+^C
 
