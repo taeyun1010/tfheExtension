@@ -831,6 +831,7 @@ void *zero_initializer_Double(void *arg)
 
 LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudKeySet* EK)	// O(2*n) algorithm = about 
 {
+	clock_t begin = clock();
 	int bin = 1;
 	while(bin<bitsize)	bin*=2;
 	LweSample *Container[bin*2];
@@ -884,6 +885,9 @@ LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudK
                 pivot+=len*2;
                 len/=2;
         }
+		clock_t end = clock();
+		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+		cout << "elapsed secs to calculate a product = " << elapsed_secs << endl;
         return Container[2*bin-2];
 }
 
@@ -1409,7 +1413,22 @@ int main(int argc, char *argv[])
 	printf("\nStarting Calculation...\n");
 	LweSample* Test;
 	if(mode == 1)	Test = CipherAdd(t0,t1,&key->cloud);
-	else if(mode == 2) Test = CipherMul(t0,t1,&key->cloud);
+	else if(mode == 2) {
+		int fpvector1[16] = {53,58,53,36,49,53,49,74,61,61,70,62,47,47,44,68};
+		int fpvector2[16] = {59,55,53,46,48,59,60,70,52,54,57,71,50,49,46,61};
+
+		LweSample* ciphertext1 = encryptInteger(fpvector1[0], key);
+		LweSample* ciphertext2 = encryptInteger(fpvector2[0], key);
+
+		for (int i=8; i< 65; i++){
+			bitsize = i;
+			cout << "bitsize = " << bitsize << endl;
+			Test = CipherMul(ciphertext1,ciphertext2,&key->cloud);
+			int result = decryptLweSample(Test, key);
+			cout << "result = " << result << endl;
+		}
+		// Test = CipherMul(t0,t1,&key->cloud);
+	}
 	else if(mode == 3) Test = CipherSub(t0,t1,&key->cloud);
 	else if(mode == 4) Test = CipherCmp(t0,t1,&key->cloud);
 	else if(mode == 5){
@@ -1436,7 +1455,7 @@ int main(int argc, char *argv[])
 			vector2.push_back(ciphertext2);
 
 		}
-		for (int i=8; i < 32; i++){
+		for (int i=28; i < 32; i++){
 			bitsize = i;
 			cout << "bitsize = " << bitsize << endl;
 			Test = CipherEuclid(vector1, vector2, &key->cloud);
@@ -1465,9 +1484,13 @@ int main(int argc, char *argv[])
 			vector2.push_back(ciphertext2);
 
 		}
-		Test = CipherOneNorm(vector1, vector2, &key->cloud);
-		int result = decryptLweSample(Test, key);
-		cout << "result = " << result << endl;
+		for (int i=28; i<32; i++){
+			bitsize = i;
+			cout << "bitsize = " << bitsize << endl;
+			Test = CipherOneNorm(vector1, vector2, &key->cloud);
+			int result = decryptLweSample(Test, key);
+			cout << "result = " << result << endl;
+		}
 	}
 	else if(mode == 8){
 		// double testdouble = 256.128;
