@@ -21,7 +21,7 @@
 
 int main(int argc, char *argv[])
 {
-    int16_t arg1 = 3276;
+    int16_t arg1 = 124;
 
     //reads the cloud key from file
     FILE* secret_key = fopen("/home/taeyun/Desktop/tensor1_new/secret.key","rb");

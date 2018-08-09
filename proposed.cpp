@@ -1572,8 +1572,8 @@ int main(int argc, char *argv[])
 
 
 		Double product = CipherMulDouble(temp1, temp2 , &key->cloud, key);
-		// double decryptedproduct = decryptDouble(product, key);
-		// cout << "decryptedproduct  = " << decryptedproduct << endl;
+		double decryptedproduct = decryptDouble(product, key);
+		cout << "decryptedproduct  = " << decryptedproduct << endl;
 	}
 	else	exit(0);
 	if(mode < 4)

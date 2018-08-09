@@ -1,0 +1,5 @@
+mysql data is stored in /usr/local/mysql/data
+
+in that directory, use 
+sudo du -h
+to display sizes of directory
