@@ -106,6 +106,52 @@ static void stackDump (lua_State *L) {
     printf("\n");  /* end the listing */
 }
 
+//decrypts ciphertext in /home/taeyun/Desktop/mysqlproxy/datatobedecrypted.txt and returns resulting integer
+static int decryptCiphertext(lua_State *L){
+    string line;
+    //reads the secret key from file
+    FILE* secret_key = fopen("/home/taeyun/Desktop/tensor1_new/secret.key","rb");
+    key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
+    fclose(secret_key);
+    //if necessary, the params are inside the key
+    const TFheGateBootstrappingParameterSet* params = key->params;
+
+    //read the 16 ciphertexts of the result
+    LweSample* ciphertext = new_gate_bootstrapping_ciphertext_array(bitsize, params);
+    const int32_t n = params->in_out_params->n;
+    for (int i=0; i<16; i++) {
+        ifstream inputfile ("/home/taeyun/Desktop/mysqlproxy/datatobedecrypted" + to_string(i) + ".txt");
+        // std::cout << "printing " << i << "th ciphertext" << std::endl;
+        for (int j=0; j<n; j++){
+            // std::cout << "j = " << j << std::endl;
+            // std::cout << "*ciphertext1[" << i << "]->a = " << *(ciphertext1[i].a + sizeof(Torus32) * j) <<std::endl;
+            // *(answer[i].a + sizeof(answer[i].a) * j) = *(ciphertext1[i].a + sizeof(ciphertext1[i].a) * j);
+            getline(inputfile, line);
+            ciphertext[i].a[j] = stoi(line);
+        
+        }
+        // std::cout << "ciphertext1[" << i << "]->b = " << ciphertext1[i].b << std::endl;
+        // std::cout << "ciphertext1[" << i << "]->current_variance = " << ciphertext1[i].current_variance << std::endl;
+        // *answer[i].a = *ciphertext1[i].a;
+        getline(inputfile, line);
+        ciphertext[i].b = stoi(line);
+        getline(inputfile, line);
+        ciphertext[i].current_variance = stod(line);
+        inputfile.close();
+    }
+    //decrypt and rebuild the answer
+    int16_t int_answer = 0;
+    for (int i=0; i<16; i++) {
+        int ai = bootsSymDecrypt(&ciphertext[i], key)>0;
+        int_answer |= (ai<<i);
+    }
+
+    std::cout << "answer = " << int_answer << std::endl;
+    
+    lua_pushnumber(L, int_answer);
+    return 1;
+}
+
 //encrypts given integer
 static int encryptInteger(lua_State *L){
     //check and fetch the arguments
@@ -117,10 +163,10 @@ static int encryptInteger(lua_State *L){
     key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
     fclose(secret_key);
 
-	//reads the cloud key from file
-    FILE* cloud_key = fopen("/home/taeyun/Desktop/tensor1_new/cloud.key","rb");
-    bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
-    fclose(cloud_key);
+	// //reads the cloud key from file
+    // FILE* cloud_key = fopen("/home/taeyun/Desktop/tensor1_new/cloud.key","rb");
+    // bk = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key);
+    // fclose(cloud_key);
 
 	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(bitsize,key->params);
 	
@@ -235,6 +281,7 @@ static int encryptInteger(lua_State *L){
 //library to be registered
 static const struct luaL_Reg mylib [] = {
       {"HOMencrypt", encryptInteger},
+      {"HOMdecrypt", decryptCiphertext},
       {NULL, NULL}  /* sentinel */
     };
 

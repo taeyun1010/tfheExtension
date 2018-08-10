@@ -16,3 +16,5 @@ lua5.1
 g++ euclideandistance.cpp tfhedistance.cpp -o euclideandistance -ltfhe-spqlios-fma -std=gnu++11 -lpthread
 
 mex proposedMEX.cpp -ltfhe-spqlios-fma -lpthread
+
+g++ -ansi -shared -fPIC -llua5.1 -I/usr/include/lua5.1/ -Wall -O3 -o tfhelib.so tfhelib.cpp -ltfhe-spqlios-fma -std=gnu++11
