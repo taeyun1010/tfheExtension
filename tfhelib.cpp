@@ -161,7 +161,7 @@ static int decryptCiphertext(lua_State *L){
         int_answer |= (ai<<i);
     }
 
-    std::cout << "answer = " << int_answer << std::endl;
+    // std::cout << "answer = " << int_answer << std::endl;
     
     lua_pushnumber(L, int_answer);
     return 1;
