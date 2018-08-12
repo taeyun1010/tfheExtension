@@ -106,9 +106,15 @@ static void stackDump (lua_State *L) {
     printf("\n");  /* end the listing */
 }
 
+bool is_file_empty(std::ifstream& pFile)
+{
+    return pFile.peek() == std::ifstream::traits_type::eof();
+}
+
 //decrypts ciphertext in /home/taeyun/Desktop/mysqlproxy/datatobedecrypted.txt and returns resulting integer
 static int decryptCiphertext(lua_State *L){
     string line;
+    int16_t int_answer = 0;
     //reads the secret key from file
     FILE* secret_key = fopen("/home/taeyun/Desktop/tensor1_new/secret.key","rb");
     key = new_tfheGateBootstrappingSecretKeySet_fromFile(secret_key);
@@ -119,8 +125,18 @@ static int decryptCiphertext(lua_State *L){
     //read the 16 ciphertexts of the result
     LweSample* ciphertext = new_gate_bootstrapping_ciphertext_array(bitsize, params);
     const int32_t n = params->in_out_params->n;
+    //TODO: fix 15
+    ifstream inputfile ("/home/taeyun/Desktop/mysqlproxy/datatobedecrypted15.txt");
+    if (is_file_empty(inputfile)){
+        lua_pushnil(L);
+        return 1;
+    }
     for (int i=0; i<16; i++) {
         ifstream inputfile ("/home/taeyun/Desktop/mysqlproxy/datatobedecrypted" + to_string(i) + ".txt");
+        // if (is_file_empty(inputfile)){
+        //     lua_pushnil(L);
+        //     return 1;
+        // }
         // std::cout << "printing " << i << "th ciphertext" << std::endl;
         for (int j=0; j<n; j++){
             // std::cout << "j = " << j << std::endl;
@@ -140,7 +156,6 @@ static int decryptCiphertext(lua_State *L){
         inputfile.close();
     }
     //decrypt and rebuild the answer
-    int16_t int_answer = 0;
     for (int i=0; i<16; i++) {
         int ai = bootsSymDecrypt(&ciphertext[i], key)>0;
         int_answer |= (ai<<i);
