@@ -29,7 +29,7 @@
 % %distances14 contains 2-norm distances between same person after rounding
 % %double to int32. distances15 contains 2-norm distances between diff person
 % %after rounding double to int32. EER about 0.384 when threshold = 638
-%%numberof features = 384
+% %numberof features = 384
 % n_bands=4;
 % h_bands=20;
 % n_arcs=12;
@@ -47,29 +47,29 @@
 % %%
 % %%
 
-% %%%
-% %%%values tweaked, these are values used in ASIACCS poster, in
-% fp_database3.dat, distances8 has distances between same person
-% EER about 0.4005 when threshold = 49, when rounded double to int
-% number of features = 16. distances20 has distances between same person
-% without rounding double to int. distances21 has distances between diff
-% person without rounding double to int.
-n_bands=8;
-h_bands=20;
-n_arcs=1;
-h_radius=12;
-h_lato=h_radius+(n_bands*h_bands*2)+16;
-if mod(h_lato,2)==0
-    h_lato=h_lato-1;
-end
-n_sectors=n_bands*n_arcs;
-matrice=zeros(h_lato);
-for ii=1:(h_lato*h_lato)
-    matrice(ii)=whichsector(ii);
-end
-num_disk=2;
-% %%%
-% %%%
+% % %%%
+% % %%%values tweaked, these are values used in ASIACCS poster, in
+% % fp_database3.dat, distances8 has distances between same person
+% % EER about 0.4005 when threshold = 49, when rounded double to int
+% % number of features = 16. distances20 has distances between same person
+% % without rounding double to int. distances21 has distances between diff
+% % person without rounding double to int. EER about 0.398 when threshold=48
+% n_bands=8;
+% h_bands=20;
+% n_arcs=1;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=2;
+% % %%%
+% % %%%
 
 % %%%
 % %%%values tweaked, these are values used in fp_database2.dat, distances6
@@ -95,3 +95,29 @@ num_disk=2;
 % num_disk=2;
 % %%%
 % %%%
+
+%%%
+%%%values tweaked, these are values used in fp_database6.dat, distances22
+%%%has 2-norm distances between same person, distances23 has 2-norm
+%%%distances between diff person, EER about 0.43 when threshold = 14
+% number of features (fingerprint vector length) = 2, did not rounded
+% double to int. distances24 has 2-norm distances between same person after
+% rounding double to int32. distances25 has 2-norm distances between diff
+% person after rounding double to int32. EER about 0.4295 when threshold=
+% 14
+n_bands=1;
+h_bands=20;
+n_arcs=1;
+h_radius=12;
+h_lato=h_radius+(n_bands*h_bands*2)+16;
+if mod(h_lato,2)==0
+    h_lato=h_lato-1;
+end
+n_sectors=n_bands*n_arcs;
+matrice=zeros(h_lato);
+for ii=1:(h_lato*h_lato)
+    matrice(ii)=whichsector(ii);
+end
+num_disk=2;
+%%%
+%%%
