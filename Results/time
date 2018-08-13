@@ -259,3 +259,5 @@ bitsize = 33
 Segmentation fault (core dumped)
 
 
+encrypting and inserting a 16 bit integer into ciphertext databases using 16 bits takes about 0.27 seconds
+retrieving and decrypting a ciphertext into 16 bit integer using 16bits 2.045 seconds

@@ -1,0 +1,97 @@
+% %%
+% %%original value given by the author of this code, in fp_database4.dat
+% % distances10 has 2-norm distances between same person, distances11 has
+% % 2-norm distances between diff person, did not rounded double to int
+% % number of features = 640 and EER about 0.3855 when threshold = 871
+% % distances16 has 2-norm distances between same person, after rounding
+% % double to int, distances17 has 2-norm distances between diff person,
+% % after rounding double to int. EER about 0.3855 when threshold = 871
+% n_bands=5;
+% h_bands=20;
+% n_arcs=16;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=8;
+% %%
+% %%
+
+% %values tweaked, in fp_database5.dat. distances12 has 2-nordm distances
+% %between same person, distance13 has 2-norm distances between diff person,
+% %did not round double to int, EER about 0.3835 when threshold = 638,
+% %distances14 contains 2-norm distances between same person after rounding
+% %double to int32. distances15 contains 2-norm distances between diff person
+% %after rounding double to int32. EER about 0.384 when threshold = 638
+%%numberof features = 384
+% n_bands=4;
+% h_bands=20;
+% n_arcs=12;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=8;
+% %%
+% %%
+
+% %%%
+% %%%values tweaked, these are values used in ASIACCS poster, in
+% fp_database3.dat, distances8 has distances between same person
+% EER about 0.4005 when threshold = 49, when rounded double to int
+% number of features = 16. distances20 has distances between same person
+% without rounding double to int. distances21 has distances between diff
+% person without rounding double to int.
+n_bands=8;
+h_bands=20;
+n_arcs=1;
+h_radius=12;
+h_lato=h_radius+(n_bands*h_bands*2)+16;
+if mod(h_lato,2)==0
+    h_lato=h_lato-1;
+end
+n_sectors=n_bands*n_arcs;
+matrice=zeros(h_lato);
+for ii=1:(h_lato*h_lato)
+    matrice(ii)=whichsector(ii);
+end
+num_disk=2;
+% %%%
+% %%%
+
+% %%%
+% %%%values tweaked, these are values used in fp_database2.dat, distances6
+% %%%has 2-norm distances between same person, distances7 has 2-norm
+% %%%distances between diff person, EER about 0.41 when threshold = 35
+% % number of features (fingerprint vector length) = 8, did not rounded
+% % double to int. distances18 has 2-norm distances between same person after
+% % rounding double to int32. distances19 has 2-norm distances between diff
+% % person after rounding double to int32. EER about 0.4045 when threshold=34
+% n_bands=4;
+% h_bands=20;
+% n_arcs=1;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=2;
+% %%%
+% %%%
