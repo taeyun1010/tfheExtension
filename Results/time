@@ -261,3 +261,11 @@ Segmentation fault (core dumped)
 
 encrypting and inserting a 16 bit integer into ciphertext databases using 16 bits takes about 0.27 seconds
 retrieving and decrypting a ciphertext into 16 bit integer using 16bits 2.045 seconds
+
+to compare two encrypted 32 bit ciphertext, it took 3.063 secondsd on average.
+
+dropping 16 ciphertexts table (when 16 bits are used to represent an integer) took 1.09 sec.
+
+creating 16 ciphertexts table (when 16 bits are used to represent an integer) took 1.69 sec.
+
+encrypting and inserting a fingerprint vector having 16 integers along with fp_number to the encrypted database took 27.07 sec. 

@@ -12,6 +12,7 @@
 #include <tfhe/tlwe.h>
 #include <tfhe/tgsw.h>
 #include "tfhedistance.h"
+#include <ctime>
 
 using namespace std;
 
@@ -215,6 +216,7 @@ void full_subtractor(LweSample *difference, const LweSample *x, const LweSample 
 // ? returns 1 if y >= x, 0 if y < x ???
 void comparison_MUX(LweSample *comp, const LweSample *x, const LweSample *y, const int32_t nb_bits,
                     const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
+    clock_t begin = clock();
     // carries
     LweSample *carry = new_LweSample_array(2, in_out_params);
     bootsCONSTANT(carry, 1, bk); // first carry initialized to 1
@@ -230,6 +232,9 @@ void comparison_MUX(LweSample *comp, const LweSample *x, const LweSample *y, con
 
     delete_LweSample(temp);
     delete_LweSample_array(2, carry);
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    cout << "elapsed_sec to compare = " << elapsed_secs << endl;
 }
 
 //calculate x*y,  uses same number of bits to represent multiplication result, might cause overflow
@@ -480,7 +485,7 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
 int main(int argc, char *argv[]){
     if(argc!=4){
 		printf("Usage : ./filename <num1> <num2> <mode>\n");
-        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparision\n>");
+        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n>");
 		exit(0);
 	}
 

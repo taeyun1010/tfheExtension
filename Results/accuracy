@@ -1,3 +1,29 @@
+%%
+%% in fp_database7.dat
+% distances26 has 2-norm distances between same person, distances27 has
+% 2-norm distances between diff person, did not rounded double to int
+% number of features = 1280  and EER about 0.377 when threshold = 1267
+% distances28 has 2-norm distances between same person, after rounding
+% double to int, distances29 has 2-norm distances between diff person,
+% after rounding double to int. EER about 0.3765 when threshold = 1267
+n_bands=5;
+h_bands=20;
+n_arcs=16;
+h_radius=12;
+h_lato=h_radius+(n_bands*h_bands*2)+16;
+if mod(h_lato,2)==0
+    h_lato=h_lato-1;
+end
+n_sectors=n_bands*n_arcs;
+matrice=zeros(h_lato);
+for ii=1:(h_lato*h_lato)
+    matrice(ii)=whichsector(ii);
+end
+num_disk=16;
+%%
+%%
+
+
 % %%
 % %%original value given by the author of this code, in fp_database4.dat
 % % distances10 has 2-norm distances between same person, distances11 has
@@ -96,28 +122,28 @@
 % %%%
 % %%%
 
-%%%
-%%%values tweaked, these are values used in fp_database6.dat, distances22
-%%%has 2-norm distances between same person, distances23 has 2-norm
-%%%distances between diff person, EER about 0.43 when threshold = 14
-% number of features (fingerprint vector length) = 2, did not rounded
-% double to int. distances24 has 2-norm distances between same person after
-% rounding double to int32. distances25 has 2-norm distances between diff
-% person after rounding double to int32. EER about 0.4295 when threshold=
-% 14
-n_bands=1;
-h_bands=20;
-n_arcs=1;
-h_radius=12;
-h_lato=h_radius+(n_bands*h_bands*2)+16;
-if mod(h_lato,2)==0
-    h_lato=h_lato-1;
-end
-n_sectors=n_bands*n_arcs;
-matrice=zeros(h_lato);
-for ii=1:(h_lato*h_lato)
-    matrice(ii)=whichsector(ii);
-end
-num_disk=2;
-%%%
-%%%
+% %%%
+% %%%values tweaked, these are values used in fp_database6.dat, distances22
+% %%%has 2-norm distances between same person, distances23 has 2-norm
+% %%%distances between diff person, EER about 0.43 when threshold = 14
+% % number of features (fingerprint vector length) = 2, did not rounded
+% % double to int. distances24 has 2-norm distances between same person after
+% % rounding double to int32. distances25 has 2-norm distances between diff
+% % person after rounding double to int32. EER about 0.4295 when threshold=
+% % 14
+% n_bands=1;
+% h_bands=20;
+% n_arcs=1;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=2;
+% %%%
+% %%%
