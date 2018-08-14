@@ -125,12 +125,21 @@ static int decryptCiphertext(lua_State *L){
     //read the 16 ciphertexts of the result
     LweSample* ciphertext = new_gate_bootstrapping_ciphertext_array(bitsize, params);
     const int32_t n = params->in_out_params->n;
-    //TODO: fix 15
-    ifstream inputfile ("/home/taeyun/Desktop/mysqlproxy/datatobedecrypted15.txt");
-    if (is_file_empty(inputfile)){
-        lua_pushnil(L);
-        return 1;
+    // //TODO: fix 15
+    // ifstream inputfile ("/home/taeyun/Desktop/mysqlproxy/datatobedecrypted15.txt");
+    // if (is_file_empty(inputfile)){
+    //     lua_pushnil(L);
+    //     return 1;
+    // }
+
+    for(int i=0; i<16; i++){
+        ifstream inputfile ("/home/taeyun/Desktop/mysqlproxy/datatobedecrypted" + to_string(i)+ ".txt");
+        if (is_file_empty(inputfile)){
+            lua_pushnil(L);
+            return 1;
+        }
     }
+
     for (int i=0; i<16; i++) {
         ifstream inputfile ("/home/taeyun/Desktop/mysqlproxy/datatobedecrypted" + to_string(i) + ".txt");
         // if (is_file_empty(inputfile)){
