@@ -18,3 +18,6 @@ g++ euclideandistance.cpp tfhedistance.cpp -o euclideandistance -ltfhe-spqlios-f
 mex proposedMEX.cpp -ltfhe-spqlios-fma -lpthread
 
 g++ -ansi -shared -fPIC -llua5.1 -I/usr/include/lua5.1/ -Wall -O3 -o tfhelib.so tfhelib.cpp -ltfhe-spqlios-fma -std=gnu++11
+
+//building udf so 
+gcc -shared -o udf_example.so udf_example.c -L/usr/lib/x86_64-linux-gnu -lmysqlclient -lpthread -lz -lm -lrt -ldl -I/usr/include/mysql -fPIC
