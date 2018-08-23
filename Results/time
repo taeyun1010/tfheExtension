@@ -269,3 +269,112 @@ dropping 16 ciphertexts table (when 16 bits are used to represent an integer) to
 creating 16 ciphertexts table (when 16 bits are used to represent an integer) took 1.69 sec.
 
 encrypting and inserting a fingerprint vector having 16 integers along with fp_number to the encrypted database took 27.07 sec. 
+
+
+calculating 2-norm using doubles for the whole dataset between the same person using numfeatures=2
+n_bands=1;
+h_bands=20;
+n_arcs=1;
+h_radius=12;
+h_lato=h_radius+(n_bands*h_bands*2)+16;
+if mod(h_lato,2)==0
+    h_lato=h_lato-1;
+end
+n_sectors=n_bands*n_arcs;
+matrice=zeros(h_lato);
+for ii=1:(h_lato*h_lato)
+    matrice(ii)=whichsector(ii);
+end
+num_disk=2;
+
+required 121.155236 seconds.
+
+calculating 2-norm using doubles for the whole dataset between the same person using numfeatures=8
+n_bands=4;
+h_bands=20;
+n_arcs=1;
+h_radius=12;
+h_lato=h_radius+(n_bands*h_bands*2)+16;
+if mod(h_lato,2)==0
+    h_lato=h_lato-1;
+end
+n_sectors=n_bands*n_arcs;
+matrice=zeros(h_lato);
+for ii=1:(h_lato*h_lato)
+    matrice(ii)=whichsector(ii);
+end
+num_disk=2;
+
+required 152.060636 seconds.
+
+calculating 2-norm using doubles for the whole dataset between the same person using numfeatures=16
+% n_bands=8;
+% h_bands=20;
+% n_arcs=1;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=2;
+
+required 217.280125 seconds.
+
+calculating 2-norm using doubles for the whole dataset between the same person using numfeatures=384
+% n_bands=4;
+% h_bands=20;
+% n_arcs=12;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=8;
+
+required 539.440978 seconds.
+
+calculating 2-norm using doubles for the whole dataset between the same person using numfeatures=640
+% n_bands=5;
+% h_bands=20;
+% n_arcs=16;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=8;
+
+required 662.145636 seconds.
+
+calculating 2-norm using doubles for the whole dataset between the same person using numfeatures=1280
+% n_bands=5;
+% h_bands=20;
+% n_arcs=16;
+% h_radius=12;
+% h_lato=h_radius+(n_bands*h_bands*2)+16;
+% if mod(h_lato,2)==0
+%     h_lato=h_lato-1;
+% end
+% n_sectors=n_bands*n_arcs;
+% matrice=zeros(h_lato);
+% for ii=1:(h_lato*h_lato)
+%     matrice(ii)=whichsector(ii);
+% end
+% num_disk=16;
+
+required 1235.551373 seconds.

@@ -485,7 +485,7 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
 int main(int argc, char *argv[]){
     if(argc!=4){
 		printf("Usage : ./filename <num1> <num2> <mode>\n");
-        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n>");
+        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n 5) Addition using MUX>\n");
 		exit(0);
 	}
 
@@ -584,6 +584,19 @@ int main(int argc, char *argv[]){
                 //     cout << "ERROR!!! " << trial << "," << nb_bits << endl;
                 // }
             }
+            break;
+        }
+        case 5: {
+            LweSample* sum = new_LweSample_array(numberofbits + 1, in_out_params);
+            full_adder_MUX(sum, ciphertext1, ciphertext2, numberofbits, key);
+            //decrypt and rebuild the 32-bit plaintext answer
+            int32_t int_answer = 0;
+            for (int i=0; i<(numberofbits+1); i++) {
+                int ai = bootsSymDecrypt(&sum[i], key);
+                int_answer |= (ai<<i);
+            }
+            
+            cout << "addition int_answer = " << int_answer << endl;
             break;
         }
     }
