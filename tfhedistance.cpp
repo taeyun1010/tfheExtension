@@ -18,7 +18,17 @@ using namespace std;
 
 // int32_t numberofbits = 32;
 
+//numberofbits must be = integerbitsize + fractionbitsize when operating on Double
 int32_t numberofbits = 32;
+
+// these are number of bits used for representing Double struct
+int integerbitsize = 0;
+int fractionbitsize = 0;
+
+struct Double{
+	LweSample *integerpart;
+	LweSample *fractionpart;
+};
 
 // struct CipherSet{
 // 	LweSample *a;
@@ -49,6 +59,106 @@ int32_t numberofbits = 32;
 void dieDramatically(string message) {
     cerr << message << endl;
     abort();
+}
+
+//encrypts given integer part of Double
+// ciphertext[0] holds least significant bit
+// ciphertext[integerbitsize-1] holds the most significant bit 
+LweSample* encryptIntegerpart(int plaintext, TFheGateBootstrappingSecretKeySet* key){
+	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(integerbitsize,key->params);
+	
+	for(int i=0;i<integerbitsize;i++)
+	{
+		bootsSymEncrypt(&ciphertext[integerbitsize-1-i],(plaintext>>i)&0x01,key);
+		
+		// //
+		// int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+		// cout << "integerpart[" << i << "] = " << temp << endl;
+		// //
+	}
+	return ciphertext;
+}
+
+
+
+
+//when plaintext is given in double type   i.e. 0.xxx
+//encrypts given fractional part, where argument plaintext is given as 41 if integer was 124.41
+LweSample* encryptFractionpart(double plaintext, TFheGateBootstrappingSecretKeySet* key){
+	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
+	// int numdigitsbefore, numdigitsafter;
+	for(int i=0;i<fractionbitsize;i++)
+	{
+		// cout << "plaintext = " << plaintext << endl;
+		// numdigitsbefore = numDigits(plaintext);
+		plaintext = plaintext * 2;
+		// numdigitsafter = numDigits(plaintext);
+		if (plaintext >= 1){
+			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],1,key);
+			bootsSymEncrypt(&ciphertext[i],1,key);
+			
+			// //
+			// int temp = bootsSymDecrypt(&ciphertext[i], key);
+			// cout << "fractionpart[" << i << "] = " << temp << endl;
+			// //
+			
+			//get rid of the leading 1
+			plaintext = plaintext - 1;
+		}
+		else {
+			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],0,key);
+			bootsSymEncrypt(&ciphertext[i],0,key);
+		
+			// //
+			// int temp = bootsSymDecrypt(&ciphertext[i], key);
+			// cout << "fractionpart[" << i << "] = " << temp << endl;
+			// //
+		
+		}
+		// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],(plaintext>>i)&0x01,key);
+	}
+	return ciphertext;
+}
+
+// decrypts given integer part of Double struct
+int decryptIntegerpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
+	int Result = 0;
+	for(int i=0;i<integerbitsize;i++)
+	{
+		// //
+		// int intermediateBit = bootsSymDecrypt(&input[i],key);
+		// cout << "intermediateBit = " << intermediateBit << endl;
+		// //
+		
+		Result<<=1;
+		Result+=bootsSymDecrypt(&input[i],key);
+	}	
+	return Result;
+}
+
+// decrypts given fractional part of Double struct
+double decryptFractionpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
+	double result = 0;
+	for(int i=0;i<fractionbitsize;i++)
+	{
+		int temp = bootsSymDecrypt(&input[i],key);
+		cout << "temp[" << i << "] = " << temp << endl;
+		result += temp * (pow(2, -(i+1)));
+	}	
+	return result;
+}
+
+// decrypts given Double struct
+double decryptDouble(Double d, TFheGateBootstrappingSecretKeySet* key){
+	double result;
+	LweSample* integerpart = d.integerpart;
+	LweSample* fractionpart = d.fractionpart;
+	int decryptedintpart = decryptIntegerpart(integerpart, key);
+	cout << "decryptedintpart = " << decryptedintpart << endl;
+	double decryptedfracpart = decryptFractionpart(fractionpart, key);
+	cout << "decryptedfracpart = " << decryptedfracpart << endl;
+	result = decryptedintpart + decryptedfracpart;
+	return result;
 }
 
 // decrypts given LweSample
@@ -110,6 +220,8 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
     // cout << "decryptedx = " << decryptedx << endl;
     // cout << "decryptedy = " << decryptedy << endl;
 
+   
+
     // carries
     LweSample *carry = new_LweSample_array(2, in_out_params);
     // first carry initialized to 0
@@ -119,19 +231,19 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
 
     for (int32_t i = 0; i < nb_bits; ++i) {
 
-        int ai = bootsSymDecrypt(&x[i], key);
-        cout << "decrypted x[" << i << "] = " << ai << endl;
-        ai = bootsSymDecrypt(&y[i], key);
-        cout << "decrypted y[" << i << "] = " << ai << endl;
+        // int ai = bootsSymDecrypt(&x[i], key);
+        // cout << "decrypted x[" << i << "] = " << ai << endl;
+        // ai = bootsSymDecrypt(&y[i], key);
+        // cout << "decrypted y[" << i << "] = " << ai << endl;
 
         //sumi = xi XOR yi XOR carry(i-1) 
         bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
         bootsXOR(sum + i, temp, carry, bk);
 
-        //
-        int decryptedbit = bootsSymDecrypt(sum + i, key);
-        cout << "decryptedbit[" << i << "]" << decryptedbit << endl;
-        //
+        
+        // int decryptedbit = bootsSymDecrypt(sum + i, key);
+        // cout << "sum[" << i << "] = " << decryptedbit << endl;
+        
 
 
         // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
@@ -144,6 +256,109 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
 
     delete_LweSample_array(3, temp);
     delete_LweSample_array(2, carry);
+}
+
+//TODO: delete key argument
+void full_adder_doublehelper(LweSample *sum, const LweSample *x, const LweSample *y, const int32_t nb_bits,
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
+    // int decryptedx = decryptLweSample(x, nb_bits, key);
+    // int decryptedy = decryptLweSample(y, nb_bits, key);
+    
+    // cout << "decryptedx = " << decryptedx << endl;
+    // cout << "decryptedy = " << decryptedy << endl;
+
+   
+
+    // carries
+    LweSample *carry = new_LweSample_array(2, in_out_params);
+    // first carry initialized to 0
+    bootsCONSTANT(carry, 0, bk);
+    // temps
+    LweSample *temp = new_LweSample_array(3, in_out_params);
+
+    for (int32_t i = (nb_bits-1); i >= 0; --i) {
+
+        // int ai = bootsSymDecrypt(&x[i], key);
+        // cout << "decrypted x[" << i << "] = " << ai << endl;
+        // ai = bootsSymDecrypt(&y[i], key);
+        // cout << "decrypted y[" << i << "] = " << ai << endl;
+
+        //sumi = xi XOR yi XOR carry(i-1) 
+        bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
+        bootsXOR(sum + i, temp, carry, bk);
+
+        
+        // int decryptedbit = bootsSymDecrypt(sum + i, key);
+        // cout << "sum[" << i << "] = " << decryptedbit << endl;
+        
+
+
+        // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
+        bootsAND(temp + 1, x + i, y + i, bk); // temp1 = xi AND yi
+        bootsAND(temp + 2, carry, temp, bk); // temp2 = carry AND temp
+        bootsXOR(carry + 1, temp + 1, temp + 2, bk);
+        bootsCOPY(carry, carry + 1, bk);
+    }
+    bootsCOPY(sum + nb_bits, carry, bk);
+
+    delete_LweSample_array(3, temp);
+    delete_LweSample_array(2, carry);
+}
+
+//TODO: delete key argument
+Double full_adder_double(Double x, Double y, 
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
+    Double result;
+	LweSample* a = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
+	LweSample* b = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
+
+    // carries
+    LweSample *carry = new_LweSample_array(2, in_out_params);
+
+    for (int i=0; i < integerbitsize; i++){
+		bootsCOPY(&a[i],&x.integerpart[i],bk);
+		bootsCOPY(&b[i],&y.integerpart[i],bk);
+	}
+	for (int i=integerbitsize; i < (integerbitsize + fractionbitsize); i++){
+		bootsCOPY(&a[i],&x.fractionpart[i-integerbitsize],bk);
+		bootsCOPY(&b[i],&y.fractionpart[i-integerbitsize],bk);
+
+		// //
+		// int decryptedbit = bootsSymDecrypt(&a[i],key);
+		// cout << "decryptedbit[" << i << "] = " << decryptedbit << endl;
+		// //
+
+		// bootsCOPY(&c[i],&input1.fractionpart[i-integerbitsize],bk);
+		// bootsCOPY(&d[i],&input2.fractionpart[i-integerbitsize],bk);
+
+	}
+	// double decryptedfraction = decryptFractionpart(&a[integerbitsize], key);
+	// cout << "decryptedfraction = " << decryptedfraction << endl;
+	// double decryptedfraction2 = decryptFractionpart(&b[integerbitsize], key);
+	// cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
+	
+    
+    
+    // //
+	// for (int i=0; i < fractionbitsize; i++){
+	// 	bootsCOPY(&c[i],&input1.fractionpart[i],bk);
+	// 	bootsCOPY(&d[i],&input2.fractionpart[i],bk);
+
+	// }
+	// //
+
+
+	LweSample *sum = new_gate_bootstrapping_ciphertext_array(numberofbits + 1,bk->params);
+
+    full_adder_doublehelper(sum, a, b, numberofbits, bk, in_out_params, key);
+
+    result.integerpart = sum;
+	result.fractionpart = sum + integerbitsize; 
+
+    //TODO: deallocate a and b?
+
+    return result;
+
 }
 
 // //calculate x-y
@@ -211,6 +426,91 @@ void full_subtractor(LweSample *difference, const LweSample *x, const LweSample 
 
     delete_LweSample_array(6, temp);
     delete_LweSample_array(2, borrow);
+}
+
+
+void full_subtractor_doublehelper(LweSample *difference, const LweSample *x, const LweSample *y, const int32_t nb_bits,
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
+    // carries
+    LweSample *borrow = new_LweSample_array(2, in_out_params);
+    
+    // first carry initialized to 0
+    bootsCONSTANT(borrow, 0, bk);
+    
+    // temps
+    LweSample *temp = new_LweSample_array(6, in_out_params);
+
+    for (int32_t i = (nb_bits-1); i >= 0; --i) {
+        //sumi = xi XOR yi XOR carry(i-1) 
+        bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
+        bootsXOR(difference + i, temp, borrow, bk);
+
+        // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
+        bootsNOT(temp + 1, x + i, bk); // temp1 = xi'
+        bootsAND(temp + 2, temp + 1, borrow, bk); // temp2 = xi' AND Bin
+        bootsAND(temp + 3, temp + 1, y + i, bk);  // temp3 = xi' AND yi
+        bootsAND(temp + 4, y + i, borrow, bk);    //temp4 = yi AND Bin
+        bootsOR(temp + 5, temp + 2, temp + 3, bk); //temp5 = (xi' AND Bin) OR (xi' AND yi)
+        bootsOR(borrow + 1, temp + 5, temp + 4, bk);
+        bootsCOPY(borrow, borrow + 1, bk);
+    }
+    // bootsCOPY(difference + nb_bits, carry, bk);
+
+    delete_LweSample_array(6, temp);
+    delete_LweSample_array(2, borrow);
+}
+
+//TODO: delete key argument
+Double full_subtractor_double(Double x, Double y, 
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
+    Double result;
+	LweSample* a = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
+	LweSample* b = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
+
+    // carries
+    LweSample *carry = new_LweSample_array(2, in_out_params);
+
+    for (int i=0; i < integerbitsize; i++){
+		bootsCOPY(&a[i],&x.integerpart[i],bk);
+		bootsCOPY(&b[i],&y.integerpart[i],bk);
+	}
+	for (int i=integerbitsize; i < (integerbitsize + fractionbitsize); i++){
+		bootsCOPY(&a[i],&x.fractionpart[i-integerbitsize],bk);
+		bootsCOPY(&b[i],&y.fractionpart[i-integerbitsize],bk);
+
+		// //
+		// int decryptedbit = bootsSymDecrypt(&a[i],key);
+		// cout << "decryptedbit[" << i << "] = " << decryptedbit << endl;
+		// //
+
+		// bootsCOPY(&c[i],&input1.fractionpart[i-integerbitsize],bk);
+		// bootsCOPY(&d[i],&input2.fractionpart[i-integerbitsize],bk);
+
+	}
+	double decryptedfraction = decryptFractionpart(&a[integerbitsize], key);
+	cout << "decryptedfraction = " << decryptedfraction << endl;
+	double decryptedfraction2 = decryptFractionpart(&b[integerbitsize], key);
+	cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
+	// //
+	// for (int i=0; i < fractionbitsize; i++){
+	// 	bootsCOPY(&c[i],&input1.fractionpart[i],bk);
+	// 	bootsCOPY(&d[i],&input2.fractionpart[i],bk);
+
+	// }
+	// //
+
+
+	LweSample *difference = new_gate_bootstrapping_ciphertext_array(numberofbits,bk->params);
+
+    full_subtractor_doublehelper(difference, a, b, numberofbits, bk, in_out_params);
+
+    result.integerpart = difference;
+	result.fractionpart = difference + integerbitsize; 
+
+    //TODO: deallocate a and b?
+
+    return result;
+
 }
 
 // ? returns 1 if y >= x, 0 if y < x ???
@@ -483,9 +783,9 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
 
 
 int main(int argc, char *argv[]){
-    if(argc!=4){
-		printf("Usage : ./filename <num1> <num2> <mode>\n");
-        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n 5) Addition using MUX>\n");
+    if(argc!=7){
+		printf("Usage : ./filename <num1> <num2> <mode> <bitsize> <integerbitsize> <fractionbitsize>\n");
+        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n 5) Addition using MUX\n 6) Double Addition\n 7) Double Subtraction>\n");
 		exit(0);
 	}
 
@@ -506,6 +806,9 @@ int main(int argc, char *argv[]){
 	arg1 = atoi(argv[1]);
 	arg2 = atoi(argv[2]);
     arg3 = atoi(argv[3]);
+    numberofbits = atoi(argv[4]);
+    integerbitsize = atoi(argv[5]);
+    fractionbitsize = atoi(argv[6]);
     LweSample *ciphertext1 = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
 	LweSample *ciphertext2 = new_gate_bootstrapping_ciphertext_array(numberofbits,params);
     for (int i=0; i<numberofbits; i++) {
@@ -514,16 +817,16 @@ int main(int argc, char *argv[]){
     }
     switch(arg3){
         case 1:{
-            // LweSample* sum = new_LweSample_array(numberofbits + 1, in_out_params);
-            // full_adder(sum, ciphertext1, ciphertext2, numberofbits, bk, in_out_params);
-            // //decrypt and rebuild the 32-bit plaintext answer
-            // int32_t int_answer = 0;
-            // for (int i=0; i<numberofbits; i++) {
-            //     int ai = bootsSymDecrypt(&sum[i], key);
-            //     int_answer |= (ai<<i);
-            // }
+            LweSample* sum = new_LweSample_array(numberofbits + 1, in_out_params);
+            full_adder(sum, ciphertext1, ciphertext2, numberofbits, bk, in_out_params, key);
+            //decrypt and rebuild the 32-bit plaintext answer
+            int32_t int_answer = 0;
+            for (int i=0; i<numberofbits; i++) {
+                int ai = bootsSymDecrypt(&sum[i], key);
+                int_answer |= (ai<<i);
+            }
             
-            // cout << "addition int_answer = " << int_answer << endl;
+            cout << "addition int_answer = " << int_answer << endl;
             break;
         }
         case 2:{
@@ -597,6 +900,101 @@ int main(int argc, char *argv[]){
             }
             
             cout << "addition int_answer = " << int_answer << endl;
+            break;
+        }
+        case 6: {
+            double arg1 = stod(argv[1]);
+            double arg2 = stod(argv[2]);
+
+            cout << "arg1 = " << arg1 << endl;
+            cout << "arg2 = " << arg2 << endl;
+            
+            double integral1, integral2;
+            int integralint1, integralint2;
+            double fractional1 = modf(arg1, &integral1);
+            double fractional2 = modf(arg2, &integral2);
+            integralint1 = integral1;
+            integralint2 = integral2;
+            cout << "integralint1 = " << integralint1 << endl;
+            cout << "fractional1 = " << fractional1 << endl;
+            cout << "integralint2 = " << integralint2 << endl;
+            cout << "fractional2 = " << fractional2 << endl;
+            LweSample *integerpart1 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+            LweSample *fractionpart1 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+            LweSample *integerpart2 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+            LweSample *fractionpart2 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+            Double temp1, temp2;
+            integerpart1 = encryptIntegerpart(integralint1, key);
+            // fractionpart = encryptFractionpart(128, key);
+            fractionpart1 = encryptFractionpart(fractional1, key);
+            // int result = decryptIntegerpart(integerpart, key);
+            // cout << "integerpart decrypted result = " << result << endl;
+            integerpart2 = encryptIntegerpart(integralint2, key);
+            // fractionpart = encryptFractionpart(128, key);
+            fractionpart2 = encryptFractionpart(fractional2, key);
+            int result2 = decryptIntegerpart(integerpart2, key);
+            cout << "integerpart2 decrypted result = " << result2 << endl;
+            double fractionresult2 = decryptFractionpart(fractionpart2, key);
+            cout << "fractionpart2 decrypted result = " << fractionresult2 << endl;
+            temp1.integerpart = integerpart1;
+            temp1.fractionpart = fractionpart1;
+            temp2.integerpart = integerpart2;
+            temp2.fractionpart = fractionpart2;
+            // double decrypted = decryptDouble(temp1, key);
+            // cout << "decrypted  = " << decrypted << endl;
+
+
+            Double sum = full_adder_double(temp1, temp2 , &key->cloud, in_out_params, key);
+            double decryptedsum = decryptDouble(sum, key);
+            cout << "decryptedsum  = " << decryptedsum << endl;
+            break;
+        }
+        case 7: {
+            double arg1 = stod(argv[1]);
+            double arg2 = stod(argv[2]);
+
+            cout << "arg1 = " << arg1 << endl;
+            cout << "arg2 = " << arg2 << endl;
+            
+            double integral1, integral2;
+            int integralint1, integralint2;
+            double fractional1 = modf(arg1, &integral1);
+            double fractional2 = modf(arg2, &integral2);
+            integralint1 = integral1;
+            integralint2 = integral2;
+            cout << "integralint1 = " << integralint1 << endl;
+            cout << "fractional1 = " << fractional1 << endl;
+            cout << "integralint2 = " << integralint2 << endl;
+            cout << "fractional2 = " << fractional2 << endl;
+
+            LweSample *integerpart1 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+            LweSample *fractionpart1 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+            LweSample *integerpart2 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+            LweSample *fractionpart2 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+            Double temp1, temp2;
+            integerpart1 = encryptIntegerpart(integralint1, key);
+            // fractionpart = encryptFractionpart(128, key);
+            fractionpart1 = encryptFractionpart(fractional1, key);
+            // int result = decryptIntegerpart(integerpart, key);
+            // cout << "integerpart decrypted result = " << result << endl;
+            integerpart2 = encryptIntegerpart(integralint2, key);
+            // fractionpart = encryptFractionpart(128, key);
+            fractionpart2 = encryptFractionpart(fractional2, key);
+            // int result = decryptIntegerpart(integerpart1, key);
+            // cout << "integerpart decrypted result = " << result << endl;
+            // double fractionresult = decryptFractionpart(fractionpart1, key);
+            // cout << "fractionpart1 decrypted result = " << fractionresult << endl;
+            temp1.integerpart = integerpart1;
+            temp1.fractionpart = fractionpart1;
+            temp2.integerpart = integerpart2;
+            temp2.fractionpart = fractionpart2;
+            // double decrypted = decryptDouble(temp1, key);
+            // cout << "decrypted  = " << decrypted << endl;
+
+
+            Double difference = full_subtractor_double(temp1, temp2 , &key->cloud, in_out_params, key);
+            double decrypteddiff = decryptDouble(difference, key);
+            cout << "decrypteddiff  = " << decrypteddiff << endl;
             break;
         }
     }
