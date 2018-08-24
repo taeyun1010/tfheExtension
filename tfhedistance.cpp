@@ -61,6 +61,67 @@ void dieDramatically(string message) {
     abort();
 }
 
+// //encrypts given integer part of Double
+// // ciphertext[0] holds least significant bit
+// // ciphertext[integerbitsize-1] holds the most significant bit 
+// LweSample* encryptIntegerpart(int plaintext, TFheGateBootstrappingSecretKeySet* key){
+// 	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(integerbitsize,key->params);
+	
+// 	for(int i=0;i<integerbitsize;i++)
+// 	{
+// 		bootsSymEncrypt(&ciphertext[integerbitsize-1-i],(plaintext>>i)&0x01,key);
+		
+// 		// //
+// 		// int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+// 		// cout << "integerpart[" << i << "] = " << temp << endl;
+// 		// //
+// 	}
+// 	return ciphertext;
+// }
+
+
+
+
+// //when plaintext is given in double type   i.e. 0.xxx
+// //encrypts given fractional part, where argument plaintext is given as 41 if integer was 124.41
+// LweSample* encryptFractionpart(double plaintext, TFheGateBootstrappingSecretKeySet* key){
+//     // plaintext = fabs(plaintext);
+
+// 	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
+// 	// int numdigitsbefore, numdigitsafter;
+// 	for(int i=0;i<fractionbitsize;i++)
+// 	{
+// 		// cout << "plaintext = " << plaintext << endl;
+// 		// numdigitsbefore = numDigits(plaintext);
+// 		plaintext = plaintext * 2;
+// 		// numdigitsafter = numDigits(plaintext);
+// 		if (plaintext >= 1){
+// 			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],1,key);
+// 			bootsSymEncrypt(&ciphertext[i],1,key);
+			
+// 			// //
+// 			// int temp = bootsSymDecrypt(&ciphertext[i], key);
+// 			// cout << "fractionpart[" << i << "] = " << temp << endl;
+// 			// //
+			
+// 			//get rid of the leading 1
+// 			plaintext = plaintext - 1;
+// 		}
+// 		else {
+// 			// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],0,key);
+// 			bootsSymEncrypt(&ciphertext[i],0,key);
+		
+// 			// //
+// 			// int temp = bootsSymDecrypt(&ciphertext[i], key);
+// 			// cout << "fractionpart[" << i << "] = " << temp << endl;
+// 			// //
+		
+// 		}
+// 		// bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],(plaintext>>i)&0x01,key);
+// 	}
+// 	return ciphertext;
+// }
+
 //encrypts given integer part of Double
 // ciphertext[0] holds least significant bit
 // ciphertext[integerbitsize-1] holds the most significant bit 
@@ -69,7 +130,7 @@ LweSample* encryptIntegerpart(int plaintext, TFheGateBootstrappingSecretKeySet* 
 	
 	for(int i=0;i<integerbitsize;i++)
 	{
-		bootsSymEncrypt(&ciphertext[integerbitsize-1-i],(plaintext>>i)&0x01,key);
+		bootsSymEncrypt(&ciphertext[i],(plaintext>>i)&0x01,key);
 		
 		// //
 		// int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
@@ -85,9 +146,11 @@ LweSample* encryptIntegerpart(int plaintext, TFheGateBootstrappingSecretKeySet* 
 //when plaintext is given in double type   i.e. 0.xxx
 //encrypts given fractional part, where argument plaintext is given as 41 if integer was 124.41
 LweSample* encryptFractionpart(double plaintext, TFheGateBootstrappingSecretKeySet* key){
+    // plaintext = fabs(plaintext);
+
 	LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
 	// int numdigitsbefore, numdigitsafter;
-	for(int i=0;i<fractionbitsize;i++)
+	for(int i=fractionbitsize-1;i>=0;i--)
 	{
 		// cout << "plaintext = " << plaintext << endl;
 		// numdigitsbefore = numDigits(plaintext);
@@ -120,30 +183,56 @@ LweSample* encryptFractionpart(double plaintext, TFheGateBootstrappingSecretKeyS
 	return ciphertext;
 }
 
+// // decrypts given integer part of Double struct
+// int decryptIntegerpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
+// 	int Result = 0;
+// 	for(int i=0;i<integerbitsize;i++)
+// 	{
+// 		// //
+// 		// int intermediateBit = bootsSymDecrypt(&input[i],key);
+// 		// cout << "intermediateBit = " << intermediateBit << endl;
+// 		// //
+		
+// 		Result<<=1;
+// 		Result+=bootsSymDecrypt(&input[i],key);
+// 	}	
+// 	return Result;
+// }
+
+// // decrypts given fractional part of Double struct
+// double decryptFractionpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
+// 	double result = 0;
+// 	for(int i=0;i<fractionbitsize;i++)
+// 	{
+// 		int temp = bootsSymDecrypt(&input[i],key);
+// 		cout << "temp[" << i << "] = " << temp << endl;
+// 		result += temp * (pow(2, -(i+1)));
+// 	}	
+// 	return result;
+// }
+
 // decrypts given integer part of Double struct
 int decryptIntegerpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
-	int Result = 0;
-	for(int i=0;i<integerbitsize;i++)
-	{
-		// //
-		// int intermediateBit = bootsSymDecrypt(&input[i],key);
-		// cout << "intermediateBit = " << intermediateBit << endl;
-		// //
-		
-		Result<<=1;
-		Result+=bootsSymDecrypt(&input[i],key);
-	}	
-	return Result;
+    //decrypt and rebuild the 32-bit plaintext answer
+    int int_answer = 0;
+    for (int i=0; i<integerbitsize; i++) {
+        int ai = bootsSymDecrypt(&input[i], key);
+        int_answer |= (ai<<i);
+    }
+    // cout << "int_answer = " << int_answer << endl;
+	return int_answer;
 }
 
 // decrypts given fractional part of Double struct
 double decryptFractionpart(LweSample* input, TFheGateBootstrappingSecretKeySet* key){
 	double result = 0;
-	for(int i=0;i<fractionbitsize;i++)
+    int counter = -1;
+	for(int i=fractionbitsize-1;i>=0;i--)
 	{
 		int temp = bootsSymDecrypt(&input[i],key);
 		cout << "temp[" << i << "] = " << temp << endl;
-		result += temp * (pow(2, -(i+1)));
+		result += temp * (pow(2, counter));
+        counter--;
 	}	
 	return result;
 }
@@ -153,13 +242,371 @@ double decryptDouble(Double d, TFheGateBootstrappingSecretKeySet* key){
 	double result;
 	LweSample* integerpart = d.integerpart;
 	LweSample* fractionpart = d.fractionpart;
+
+    cout << "start of integerpart" << endl;
+    for(int i=0 ; i < integerbitsize; i++){
+        int temp = bootsSymDecrypt(&integerpart[i],key);
+		cout << "temp[" << i << "] = " << temp << endl;
+    }
+    cout << "end of integerpart" << endl;
+
+
+    cout << "start of fractionpart" << endl;
+    for(int i=0 ; i < integerbitsize; i++){
+        int temp = bootsSymDecrypt(&fractionpart[i],key);
+		cout << "temp[" << i << "] = " << temp << endl;
+    }
+    cout << "end of fractionpart" << endl;
+
+    //
+    // //decrypt and rebuild the 32-bit plaintext answer
+    // int32_t int_answer = 0;
+    // for (int i=0; i<integerbitsize; i++) {
+    //     int ai = bootsSymDecrypt(&integerpart[i], key);
+    //     int_answer |= (ai<<i);
+    // }
+    // cout << "int_answer = " << int_answer << endl;
+    //
+
 	int decryptedintpart = decryptIntegerpart(integerpart, key);
 	cout << "decryptedintpart = " << decryptedintpart << endl;
 	double decryptedfracpart = decryptFractionpart(fractionpart, key);
 	cout << "decryptedfracpart = " << decryptedfracpart << endl;
-	result = decryptedintpart + decryptedfracpart;
-	return result;
+
+    // //if the plaintext value is going to be negative
+    // if (decryptedintpart < 0){
+    //     result = decryptedintpart + decryptedfracpart;
+    // }
+    // else{
+	//     result = decryptedintpart + decryptedfracpart;
+    // }
+
+
+    result = decryptedintpart + decryptedfracpart;
+
+    return result;
 }
+
+// //prints the bit representation of a given double, in double precision format, including mantissa and etc..
+// void printdoublebits(double doubleValue){
+//     cout << "inside printdoublebits function" << endl;
+//     uint8_t *bytePointer = (uint8_t *)&doubleValue;
+
+//     for(size_t index = 0; index < sizeof(double); index++)
+//     {
+//         uint8_t byte = bytePointer[index];
+
+//         for(int bit = 0; bit < 8; bit++)
+//         {
+//             printf("%d", byte&1);
+//             byte >>= 1;
+//         }
+//     }
+//     cout << "leaving printdoublebits function" << endl;
+// }
+
+//given double, encrypts it to Double
+Double encryptDouble(double plaintext, TFheGateBootstrappingSecretKeySet* key){
+    Double result;
+
+    //fraction part first, then integerpart, from least significant to most significant
+    // for instance, 00100101 for -5.75 using 4 bits for decimal and 4 bits for fraction parts
+    int bitholder[(integerbitsize + fractionbitsize)];
+    double integral;
+    int integralint;
+    double fractional = modf(plaintext, &integral);
+    integralint = integral;
+    LweSample *integerpart = new_gate_bootstrapping_ciphertext_array(integerbitsize,key->params);
+    LweSample *fractionpart = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
+    //if plaintext is positive 
+    if(plaintext >= 0){
+        integerpart = encryptIntegerpart(integralint, key);
+        // fractionpart = encryptFractionpart(128, key);
+        fractionpart = encryptFractionpart(fractional, key);
+        // int result = decryptIntegerpart(integerpart, key);
+        // cout << "integerpart decrypted result = " << result << endl;
+        // int result = decryptIntegerpart(integerpart1, key);
+        // cout << "integerpart decrypted result = " << result << endl;
+        // double fractionresult = decryptFractionpart(fractionpart1, key);
+        // cout << "fractionpart1 decrypted result = " << fractionresult << endl;
+        
+    }
+
+    //if plaintext is negative, https://stackoverflow.com/questions/42439749/how-to-convert-negative-fraction-decimal-to-binary to calculate bits of negative double
+    else {
+        integralint = (-1) * integralint;
+        fractional = (-1) * fractional;
+        for(int i=0;i<integerbitsize;i++)
+        {
+            bitholder[fractionbitsize+i] = (integralint>>i)&0x01;
+
+
+            // bootsSymEncrypt(&ciphertext[integerbitsize-1-i],(plaintext>>i)&0x01,key);
+            
+            // //
+            // int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+            // cout << "integerpart[" << i << "] = " << temp << endl;
+            // //
+        }
+        for(int i=(fractionbitsize-1);i>=0;i--)
+        {
+            // cout << "plaintext = " << plaintext << endl;
+            // numdigitsbefore = numDigits(plaintext);
+            fractional = fractional * 2;
+            // numdigitsafter = numDigits(plaintext);
+            if (fractional >= 1){
+                // bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],1,key);
+                // bootsSymEncrypt(&ciphertext[i],1,key);
+                bitholder[i] = 1;
+                // //
+                // int temp = bootsSymDecrypt(&ciphertext[i], key);
+                // cout << "fractionpart[" << i << "] = " << temp << endl;
+                // //
+                
+                //get rid of the leading 1
+                fractional = fractional - 1;
+            }
+            else {
+                // bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],0,key);
+                // bootsSymEncrypt(&ciphertext[i],0,key);
+                bitholder[i] = 0;
+
+                // //
+                // int temp = bootsSymDecrypt(&ciphertext[i], key);
+                // cout << "fractionpart[" << i << "] = " << temp << endl;
+                // //
+            
+            }
+            // bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],(fractional>>i)&0x01,key);
+        }
+
+
+        // for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+        //     cout << "bitholder[" << i << "] = " << bitholder[i] << endl;
+        // }
+
+        //bits of positive representation has been calculated, invert all bits
+        for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+            if (bitholder[i] == 1){
+                bitholder[i] = 0;
+            }
+            else{
+                bitholder[i] = 1;
+            }
+        }
+
+        // cout <<"done with inverting " << endl;
+        // for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+        //     cout << "bitholder[" << i << "] = " << bitholder[i] << endl;
+        // }
+
+        //add 1 to the least significant digit
+        int carry = 1;
+        for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+            switch (bitholder[i] + carry){
+                case 2:{
+                    bitholder[i] = 0;
+                    carry = 1;  
+                    break;
+                }
+                case 1:{
+                    bitholder[i] = 1;
+                    carry = 0;
+                    break;
+                }
+                case 0:{
+                    bitholder[i] = 0;
+                    carry = 0;
+                    break;
+                }
+            }
+        }
+
+        cout <<"done with addition of 1" << endl;
+        for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+            cout << "bitholder[" << i << "] = " << bitholder[i] << endl;
+        }
+
+        //bitholder now has bits for negative double values, must encrypt
+        for(int i=0;i<integerbitsize;i++)
+        {
+            bootsSymEncrypt(&integerpart[i],bitholder[fractionbitsize+i],key);
+            
+            // //
+            // int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+            // cout << "integerpart[" << i << "] = " << temp << endl;
+            // //
+        }
+        for(int i=0;i<fractionbitsize;i++)
+        {
+            bootsSymEncrypt(&fractionpart[i],bitholder[i],key);
+            
+            // //
+            // int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+            // cout << "integerpart[" << i << "] = " << temp << endl;
+            // //
+        }
+
+
+    }
+    result.integerpart = integerpart;
+    result.fractionpart = fractionpart;
+    return result;
+
+    
+}
+
+// //given double, encrypts it to Double
+// Double encryptDouble(double plaintext, TFheGateBootstrappingSecretKeySet* key){
+//     Double result;
+
+    
+//     int bitholder[(integerbitsize + fractionbitsize)];
+//     double integral;
+//     int integralint;
+//     double fractional = modf(plaintext, &integral);
+//     integralint = integral;
+//     LweSample *integerpart = new_gate_bootstrapping_ciphertext_array(integerbitsize,key->params);
+//     LweSample *fractionpart = new_gate_bootstrapping_ciphertext_array(fractionbitsize,key->params);
+//     //if plaintext is positive 
+//     if(plaintext >= 0){
+//         integerpart = encryptIntegerpart(integralint, key);
+//         // fractionpart = encryptFractionpart(128, key);
+//         fractionpart = encryptFractionpart(fractional, key);
+//         // int result = decryptIntegerpart(integerpart, key);
+//         // cout << "integerpart decrypted result = " << result << endl;
+//         // int result = decryptIntegerpart(integerpart1, key);
+//         // cout << "integerpart decrypted result = " << result << endl;
+//         // double fractionresult = decryptFractionpart(fractionpart1, key);
+//         // cout << "fractionpart1 decrypted result = " << fractionresult << endl;
+        
+//     }
+
+//     //if plaintext is negative, https://stackoverflow.com/questions/42439749/how-to-convert-negative-fraction-decimal-to-binary to calculate bits of negative double
+//     //integer part first, then fractionpart, from most significant to least significant
+//     // for instance, 00100101 for -5.75 using 4 bits for decimal and 4 bits for fraction parts
+//     else {
+//         integralint = (-1) * integralint;
+//         fractional = (-1) * fractional;
+//         for(int i=integerbitsize-1;i>=0;i--)
+//         {
+//             bitholder[i] = (integralint>>i)&0x01;
+
+
+//             // bootsSymEncrypt(&ciphertext[integerbitsize-1-i],(plaintext>>i)&0x01,key);
+            
+//             // //
+//             // int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+//             // cout << "integerpart[" << i << "] = " << temp << endl;
+//             // //
+//         }
+//         for(int i=fractionbitsize;i < (integerbitsize+fractionbitsize);i++)
+//         {
+//             // cout << "plaintext = " << plaintext << endl;
+//             // numdigitsbefore = numDigits(plaintext);
+//             fractional = fractional * 2;
+//             // numdigitsafter = numDigits(plaintext);
+//             if (fractional >= 1){
+//                 // bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],1,key);
+//                 // bootsSymEncrypt(&ciphertext[i],1,key);
+//                 bitholder[i] = 1;
+//                 // //
+//                 // int temp = bootsSymDecrypt(&ciphertext[i], key);
+//                 // cout << "fractionpart[" << i << "] = " << temp << endl;
+//                 // //
+                
+//                 //get rid of the leading 1
+//                 fractional = fractional - 1;
+//             }
+//             else {
+//                 // bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],0,key);
+//                 // bootsSymEncrypt(&ciphertext[i],0,key);
+//                 bitholder[i] = 0;
+
+//                 // //
+//                 // int temp = bootsSymDecrypt(&ciphertext[i], key);
+//                 // cout << "fractionpart[" << i << "] = " << temp << endl;
+//                 // //
+            
+//             }
+//             // bootsSymEncrypt(&ciphertext[fractionbitsize-1-i],(fractional>>i)&0x01,key);
+//         }
+
+
+//         for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+//             cout << "bitholder[" << i << "] = " << bitholder[i] << endl;
+//         }
+
+//         //bits of positive representation has been calculated, invert all bits
+//         for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+//             if (bitholder[i] == 1){
+//                 bitholder[i] = 0;
+//             }
+//             else{
+//                 bitholder[i] = 1;
+//             }
+//         }
+
+//         cout <<"done with inverting " << endl;
+//         for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+//             cout << "bitholder[" << i << "] = " << bitholder[i] << endl;
+//         }
+
+//         //add 1 to the least significant digit
+//         int carry = 1;
+//         for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+//             switch (bitholder[i] + carry){
+//                 case 2:{
+//                     bitholder[i] = 0;
+//                     carry = 1;  
+//                     break;
+//                 }
+//                 case 1:{
+//                     bitholder[i] = 1;
+//                     carry = 0;
+//                     break;
+//                 }
+//                 case 0:{
+//                     bitholder[i] = 0;
+//                     carry = 0;
+//                     break;
+//                 }
+//             }
+//         }
+
+//         cout <<"done with addition of 1" << endl;
+//         for (int i=0; i<(integerbitsize+fractionbitsize);i++){
+//             cout << "bitholder[" << i << "] = " << bitholder[i] << endl;
+//         }
+
+//         //bitholder now has bits for negative double values, must encrypt
+//         for(int i=0;i<integerbitsize;i++)
+//         {
+//             bootsSymEncrypt(&integerpart[i],bitholder[fractionbitsize+i],key);
+            
+//             // //
+//             // int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+//             // cout << "integerpart[" << i << "] = " << temp << endl;
+//             // //
+//         }
+//         for(int i=0;i<fractionbitsize;i++)
+//         {
+//             bootsSymEncrypt(&fractionpart[i],bitholder[i],key);
+            
+//             // //
+//             // int temp = bootsSymDecrypt(&ciphertext[integerbitsize-1-i], key);
+//             // cout << "integerpart[" << i << "] = " << temp << endl;
+//             // //
+//         }
+
+
+//     }
+//     result.integerpart = integerpart;
+//     result.fractionpart = fractionpart;
+//     return result;
+
+    
+// }
 
 // decrypts given LweSample
 int32_t decryptLweSample(const LweSample* input, const int32_t nb_bits, TFheGateBootstrappingSecretKeySet* key){
@@ -785,7 +1232,7 @@ void full_multiplicator(LweSample *product, const LweSample *x, const LweSample 
 int main(int argc, char *argv[]){
     if(argc!=7){
 		printf("Usage : ./filename <num1> <num2> <mode> <bitsize> <integerbitsize> <fractionbitsize>\n");
-        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n 5) Addition using MUX\n 6) Double Addition\n 7) Double Subtraction>\n");
+        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n 5) Addition using MUX\n 6) Double Addition\n 7) Double Subtraction\n 8) Test encryption of Double>\n");
 		exit(0);
 	}
 
@@ -995,6 +1442,14 @@ int main(int argc, char *argv[]){
             Double difference = full_subtractor_double(temp1, temp2 , &key->cloud, in_out_params, key);
             double decrypteddiff = decryptDouble(difference, key);
             cout << "decrypteddiff  = " << decrypteddiff << endl;
+            break;
+        }
+        case 8: {
+            double arg1 = stod(argv[1]);
+
+            Double encrypted = encryptDouble(arg1, key);
+            double decrypted = decryptDouble(encrypted,key);
+            cout << "decrypted = " << decrypted << endl;
             break;
         }
     }
