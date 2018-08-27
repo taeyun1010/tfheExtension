@@ -697,6 +697,10 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
         bootsAND(temp + 1, x + i, y + i, bk); // temp1 = xi AND yi
         bootsAND(temp + 2, carry, temp, bk); // temp2 = carry AND temp
         bootsXOR(carry + 1, temp + 1, temp + 2, bk);
+
+        // int decryptedcarry = bootsSymDecrypt(carry + 1, key);
+        // cout << "carry[" << i << "] = " << decryptedcarry << endl;
+
         bootsCOPY(carry, carry + 1, bk);
     }
     bootsCOPY(sum + nb_bits, carry, bk);
@@ -984,83 +988,197 @@ void comparison_MUX(LweSample *comp, const LweSample *x, const LweSample *y, con
     cout << "elapsed_sec to compare = " << elapsed_secs << endl;
 }
 
-//calculate x*y,  uses same number of bits to represent multiplication result, might cause overflow
-void full_multiplicator(LweSample *product, const LweSample *x, const LweSample *y, const int32_t nb_bits,
-                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
-    int ai;
+// //calculate x*y,  uses same number of bits to represent multiplication result, might cause overflow
+// void full_multiplicator(LweSample *product, const LweSample *x, const LweSample *y, const int32_t nb_bits,
+//                 const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
+//     int ai;
 
-    for (int j=0; j<nb_bits; j++){
-            ai = bootsSymDecrypt(&x[j], key);
-            cout << "x[" << j << "]" << " = " << ai << endl;
+//     for (int j=0; j<nb_bits; j++){
+//             ai = bootsSymDecrypt(&x[j], key);
+//             cout << "x[" << j << "]" << " = " << ai << endl;
+//     }
+//     for (int j=0; j<nb_bits; j++){
+//             ai = bootsSymDecrypt(&y[j], key);
+//             cout << "y[" << j << "]" << " = " << ai << endl;
+//     }
+//     // temps
+//     // LweSample *temp = new_LweSample_array(nb_bits, in_out_params);
+//     const TFheGateBootstrappingParameterSet* params = key->params;
+//     LweSample *temp = new_gate_bootstrapping_ciphertext_array(nb_bits,params);
+
+
+
+//     LweSample *partialsum = new_LweSample_array(nb_bits + 1, in_out_params);
+//     for (int j=0; j<nb_bits; j++){
+//             ai = bootsSymDecrypt(&partialsum[j], key);
+//             cout << "initial partialsum[" << j << "]" << " = " << ai << endl;
+//     }
+//     // for (int i=0; i<numberofbits; i++) {
+//     //             int ai = bootsSymDecrypt(&product[i], key);
+//     //             int_answer |= (ai<<i);
+//     //         }
+
+
+//     for (int i=0; i< nb_bits; i++){
+//         cout << "doing " << i << "th loop" << endl;
+//         for (int j=0; j<nb_bits; j++){
+//             bootsAND(temp+j, &x[j], &y[i], bk);
+//             ai = bootsSymDecrypt(&temp[j], key);
+//             cout << "ai = " << ai << endl;
+//         }
+//         // LweSample *temp2 = new_LweSample_array(nb_bits, in_out_params);
+//         LweSample *temp2 = new_gate_bootstrapping_ciphertext_array(nb_bits,params);
+//         for (int j=0; j<nb_bits; j++){
+//             bootsCOPY(&temp2[j], &partialsum[j], bk);
+//         }
+//         // bootsCOPY(temp2, partialsum, bk);
+//         for (int j=0; j<nb_bits; j++){
+//             ai = bootsSymDecrypt(&temp2[j], key);
+//             cout << "copied temp2[" << j << "]" << " = " << ai << endl;
+//         }
+//         for (int j=0; j<nb_bits; j++){
+//             ai = bootsSymDecrypt(&temp[j], key);
+//             cout << "temp before addition temp[" << j << "]" << " = " << ai << endl;
+//         }
+//         for (int j=0; j<nb_bits; j++){
+//             ai = bootsSymDecrypt(&partialsum[j], key);
+//             cout << "partialsum before addition partialsum[" << j << "]" << " = " << ai << endl;
+//         }
+//         full_adder(partialsum, temp, temp2, nb_bits, bk, in_out_params, key);
+//         // for (int j=0; j<nb_bits; j++){
+//         //     ai = bootsSymDecrypt(&partialsum[j], key);
+//         //     cout << "partialsum[" << j << "]" << " = " << ai << endl;
+//         // }
+//         int32_t int_answer = 0;
+//         for (int j=0; j<nb_bits; j++) {
+//             int ai = bootsSymDecrypt(&partialsum[j], key);
+//             int_answer |= (ai<<j);
+//         }
+        
+//         cout << "partialsum int_answer = " << int_answer << endl;
+//         delete_LweSample_array(nb_bits, temp2);
+//     }
+
+//     bootsCOPY(product, partialsum, bk);
+
+//     delete_LweSample_array(nb_bits, temp);
+//     delete_LweSample_array(nb_bits, partialsum);
+    
+// }
+
+
+
+//calculate x*y,  uses same number of bits to represent multiplication result, might cause overflow
+void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const int32_t nb_bits,
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
+    
+    clock_t begin = clock();
+
+    const TFheGateBootstrappingParameterSet* params = key->params;
+    
+    LweSample *partialsum = new_LweSample_array(nb_bits*2+1, in_out_params);
+    
+    for (int i=0; i < (nb_bits*2+1); i++){
+        bootsCONSTANT(&partialsum[i], 0, bk); // initialized to 0
     }
-    for (int j=0; j<nb_bits; j++){
-            ai = bootsSymDecrypt(&y[j], key);
-            cout << "y[" << j << "]" << " = " << ai << endl;
-    }
+    
+    // for (int i=0; i<(nb_bits*2+1); i++) {
+    //     bootsSymEncrypt(&partialsum[i], (0>>i)&1, key);
+    // }
+
+    // int decryptedx = decryptLweSample(x, nb_bits, key);
+    // int decryptedy = decryptLweSample(y, nb_bits, key);
+    // cout << "x = " << decryptedx << endl;
+    // cout << "y = " << decryptedy << endl;
+
     // temps
     // LweSample *temp = new_LweSample_array(nb_bits, in_out_params);
-    const TFheGateBootstrappingParameterSet* params = key->params;
+
+    //temp used to store ANDed value
     LweSample *temp = new_gate_bootstrapping_ciphertext_array(nb_bits,params);
 
+    //temp2 used to store shifted ANDed value, filled with zeros in empty bits 
+    LweSample *temp2 = new_gate_bootstrapping_ciphertext_array(nb_bits * 2,params);
 
-
-    LweSample *partialsum = new_LweSample_array(nb_bits + 1, in_out_params);
-    for (int j=0; j<nb_bits; j++){
-            ai = bootsSymDecrypt(&partialsum[j], key);
-            cout << "initial partialsum[" << j << "]" << " = " << ai << endl;
-    }
-    // for (int i=0; i<numberofbits; i++) {
-    //             int ai = bootsSymDecrypt(&product[i], key);
-    //             int_answer |= (ai<<i);
-    //         }
-
+    //temp3 used to store partialsum temporalily 
+    LweSample *temp3 = new_gate_bootstrapping_ciphertext_array(nb_bits * 2,params);
 
     for (int i=0; i< nb_bits; i++){
-        cout << "doing " << i << "th loop" << endl;
-        for (int j=0; j<nb_bits; j++){
-            bootsAND(temp+j, &x[j], &y[i], bk);
-            ai = bootsSymDecrypt(&temp[j], key);
-            cout << "ai = " << ai << endl;
-        }
-        // LweSample *temp2 = new_LweSample_array(nb_bits, in_out_params);
-        LweSample *temp2 = new_gate_bootstrapping_ciphertext_array(nb_bits,params);
-        for (int j=0; j<nb_bits; j++){
-            bootsCOPY(&temp2[j], &partialsum[j], bk);
-        }
-        // bootsCOPY(temp2, partialsum, bk);
-        for (int j=0; j<nb_bits; j++){
-            ai = bootsSymDecrypt(&temp2[j], key);
-            cout << "copied temp2[" << j << "]" << " = " << ai << endl;
-        }
-        for (int j=0; j<nb_bits; j++){
-            ai = bootsSymDecrypt(&temp[j], key);
-            cout << "temp before addition temp[" << j << "]" << " = " << ai << endl;
-        }
-        for (int j=0; j<nb_bits; j++){
-            ai = bootsSymDecrypt(&partialsum[j], key);
-            cout << "partialsum before addition partialsum[" << j << "]" << " = " << ai << endl;
-        }
-        full_adder(partialsum, temp, temp2, nb_bits, bk, in_out_params, key);
-        // for (int j=0; j<nb_bits; j++){
-        //     ai = bootsSymDecrypt(&partialsum[j], key);
-        //     cout << "partialsum[" << j << "]" << " = " << ai << endl;
-        // }
-        int32_t int_answer = 0;
-        for (int j=0; j<nb_bits; j++) {
-            int ai = bootsSymDecrypt(&partialsum[j], key);
-            int_answer |= (ai<<j);
-        }
+        cout << "doing " << i << "th bit" << endl;
+
+        //ybit being used to AND
+        LweSample* ybit = y+i;    
         
-        cout << "partialsum int_answer = " << int_answer << endl;
-        delete_LweSample_array(nb_bits, temp2);
+        //ANDing
+        for (int j=0; j < nb_bits; j++){
+            bootsAND(temp+j, x+j, ybit, bk);
+        }
+
+        //shifting
+        for (int j=0; j < i; j++){
+            bootsCONSTANT(temp2+j, 0, bk);
+        }
+
+        for (int j=i; j < (i+nb_bits); j++){
+            bootsCOPY(temp2+j, temp + j - i, bk);
+        }
+
+        for (int j=i+nb_bits; j<(nb_bits*2); j++){
+            bootsCONSTANT(temp2+j, 0, bk);
+        }
+        //
+
+
+        //copy partialsum to temp3
+        for (int j=0; j < (nb_bits*2); j++){
+            bootsCOPY(temp3+j, partialsum+j, bk);
+        }
+
+        // //
+        // cout << "partialsum values " << endl;
+        // for (int j=0; j<(nb_bits*2); j++){
+        //     int ai = bootsSymDecrypt(&partialsum[j], key);
+        //     cout << "ai[" << j << "] = " << ai << endl;
+        // }
+        // //
+        // cout << "temp2 values " << endl;
+        // for (int j=0; j<(nb_bits*2); j++){
+        //     int ai = bootsSymDecrypt(&temp2[j], key);
+        //     cout << "ai[" << j << "] = " << ai << endl;
+        // }
+        // //
+        // cout << "temp3 values " << endl;
+        // for (int j=0; j<(nb_bits*2); j++){
+        //     int ai = bootsSymDecrypt(&temp3[j], key);
+        //     cout << "ai[" << j << "] = " << ai << endl;
+        // }
+        // //
+        // //
+        
+
+        full_adder(partialsum, temp3, temp2, nb_bits*2, bk, in_out_params, key);
     }
 
-    bootsCOPY(product, partialsum, bk);
-
-    delete_LweSample_array(nb_bits, temp);
-    delete_LweSample_array(nb_bits, partialsum);
+    // full_adder(partialsum, x, y, nb_bits, bk, in_out_params, key);
     
+    // int decryptedsum = decryptLweSample(partialsum, nb_bits, key);
+    // cout << "decryptedsum = " << decryptedsum << endl;
+    
+    for (int i=0; i < (nb_bits*2); i++){
+        bootsCOPY(product+i, partialsum+i, bk);
+    }
+    // product = partialsum;
+    
+    //TODO: deallocate pointers
+    // delete_LweSample_array(nb_bits+1, partialsum);
+
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    cout << "elapsed secs = " << elapsed_secs << endl;
+
 }
+
+
 // void *thread_xor(void *arg)
 // {
 // 	struct CalcSet* input = (struct CalcSet*)arg;
@@ -1277,11 +1395,11 @@ int main(int argc, char *argv[]){
             break;
         }
         case 2:{
-            LweSample* product = new_LweSample_array(numberofbits, in_out_params);
+            LweSample* product = new_LweSample_array(numberofbits*2, in_out_params);
             full_multiplicator(product, ciphertext1, ciphertext2, numberofbits,bk, in_out_params, key);
             //decrypt and rebuild the 32-bit plaintext answer
             int32_t int_answer = 0;
-            for (int i=0; i<numberofbits; i++) {
+            for (int i=0; i< (numberofbits*2); i++) {
                 int ai = bootsSymDecrypt(&product[i], key);
                 int_answer |= (ai<<i);
             }
