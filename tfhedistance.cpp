@@ -1186,7 +1186,6 @@ void comparison_MUX_double(LweSample *comp, Double x, Double y, const int32_t nb
                     const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
     clock_t begin = clock();
     
-    Double result;
 	LweSample* a = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
 	LweSample* b = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
 
@@ -1309,6 +1308,16 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
     for (int i=0; i < (nb_bits*2+1); i++){
         bootsCONSTANT(&partialsum[i], 0, bk); // initialized to 0
     }
+
+
+    // for (int j=0; j<nb_bits; j++){
+    //     int ai = bootsSymDecrypt(&x[j], key);
+    //     cout << "x  's   ai[" << j << "] = " << ai << endl;
+    // }
+    // for (int j=0; j<nb_bits; j++){
+    //     int bi = bootsSymDecrypt(&y[j], key);
+    //     cout << "y   's   bi[" << j << "] = " << bi << endl;
+    // }
     
     // for (int i=0; i<(nb_bits*2+1); i++) {
     //     bootsSymEncrypt(&partialsum[i], (0>>i)&1, key);
@@ -1404,6 +1413,40 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     cout << "elapsed secs = " << elapsed_secs << endl;
 
+}
+
+//calculate x*y,  uses same number of bits to represent multiplication result, might cause overflow
+Double full_multiplicator_double(Double x, Double y, const int32_t nb_bits,
+                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
+    Double result;
+    LweSample* a = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
+	LweSample* b = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
+
+    for (int i=0; i < fractionbitsize; i++){
+		bootsCOPY(&a[i],&x.fractionpart[i],bk);
+		bootsCOPY(&b[i],&y.fractionpart[i],bk);
+	}
+	for (int i=fractionbitsize; i < (integerbitsize + fractionbitsize); i++){
+		bootsCOPY(&a[i],&x.integerpart[i-fractionbitsize],bk);
+		bootsCOPY(&b[i],&y.integerpart[i-fractionbitsize],bk);
+
+		// //
+		// int decryptedbit = bootsSymDecrypt(&a[i],key);
+		// cout << "decryptedbit[" << i << "] = " << decryptedbit << endl;
+		// //
+
+		// bootsCOPY(&c[i],&input1.fractionpart[i-integerbitsize],bk);
+		// bootsCOPY(&d[i],&input2.fractionpart[i-integerbitsize],bk);
+
+	}
+
+    LweSample* product = new_LweSample_array(nb_bits*2, in_out_params);
+    full_multiplicator(product, a, b, nb_bits , bk, in_out_params, key);
+
+    result.fractionpart = product;
+	result.integerpart = product + fractionbitsize; 
+
+    return result;
 }
 
 
@@ -1578,7 +1621,7 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
 int main(int argc, char *argv[]){
     if(argc!=7){
 		printf("Usage : ./filename <num1> <num2> <mode> <bitsize> <integerbitsize> <fractionbitsize>\n");
-        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n 5) Addition using MUX\n 6) Double Addition\n 7) Double Subtraction\n 8) Test encryption of Double\n 9) Comparison between doubles>\n");
+        printf("Calculation mode :\n1) Addition\n2) Multiplication\n3) Subtraction\n4) Comparison\n 5) Addition using MUX\n 6) Double Addition\n 7) Double Subtraction\n 8) Test encryption of Double\n 9) Comparison between doubles\n 10)Multiplication between doubles>\n");
 		exit(0);
 	}
 
@@ -1859,6 +1902,52 @@ int main(int argc, char *argv[]){
                 // }
             }
             break;
+        }
+        case 10: {
+            double arg1 = stod(argv[1]);
+            double arg2 = stod(argv[2]);
+
+            cout << "arg1 = " << arg1 << endl;
+            cout << "arg2 = " << arg2 << endl;
+            
+            double integral1, integral2;
+            int integralint1, integralint2;
+            double fractional1 = modf(arg1, &integral1);
+            double fractional2 = modf(arg2, &integral2);
+            integralint1 = integral1;
+            integralint2 = integral2;
+            cout << "integralint1 = " << integralint1 << endl;
+            cout << "fractional1 = " << fractional1 << endl;
+            cout << "integralint2 = " << integralint2 << endl;
+            cout << "fractional2 = " << fractional2 << endl;
+
+            LweSample *integerpart1 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+            LweSample *fractionpart1 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+            LweSample *integerpart2 = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
+            LweSample *fractionpart2 = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
+            Double temp1, temp2, product;
+            integerpart1 = encryptIntegerpart(integralint1, key);
+            // fractionpart = encryptFractionpart(128, key);
+            fractionpart1 = encryptFractionpart(fractional1, key);
+            // int result = decryptIntegerpart(integerpart, key);
+            // cout << "integerpart decrypted result = " << result << endl;
+            integerpart2 = encryptIntegerpart(integralint2, key);
+            // fractionpart = encryptFractionpart(128, key);
+            fractionpart2 = encryptFractionpart(fractional2, key);
+            // int result = decryptIntegerpart(integerpart1, key);
+            // cout << "integerpart decrypted result = " << result << endl;
+            // double fractionresult = decryptFractionpart(fractionpart1, key);
+            // cout << "fractionpart1 decrypted result = " << fractionresult << endl;
+            temp1.integerpart = integerpart1;
+            temp1.fractionpart = fractionpart1;
+            temp2.integerpart = integerpart2;
+            temp2.fractionpart = fractionpart2;
+
+            product = full_multiplicator_double(temp1, temp2, numberofbits, bk, in_out_params, key);
+            double decrypted = decryptDouble(product,key);
+            cout << "decrypted = " << decrypted << endl;
+            break;
+
         }
     }
 
