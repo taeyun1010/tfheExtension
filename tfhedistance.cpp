@@ -711,61 +711,61 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
     delete_LweSample_array(2, carry);
 }
 
-//TODO: delete key argument
-void full_adder_doublehelper(LweSample *sum, const LweSample *x, const LweSample *y, const int32_t nb_bits,
-                const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
-    // int decryptedx = decryptLweSample(x, nb_bits, key);
-    // int decryptedy = decryptLweSample(y, nb_bits, key);
+// //TODO: delete key argument
+// void full_adder_doublehelper(LweSample *sum, const LweSample *x, const LweSample *y, const int32_t nb_bits,
+//                 const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
+//     // int decryptedx = decryptLweSample(x, nb_bits, key);
+//     // int decryptedy = decryptLweSample(y, nb_bits, key);
     
-    // cout << "decryptedx = " << decryptedx << endl;
-    // cout << "decryptedy = " << decryptedy << endl;
+//     // cout << "decryptedx = " << decryptedx << endl;
+//     // cout << "decryptedy = " << decryptedy << endl;
 
-    for (int32_t i = 0; i < nb_bits; ++i) {
-        int ai = bootsSymDecrypt(&x[i], key);
-        cout << "decrypted x[" << i << "] = " << ai << endl;
-    }
+//     for (int32_t i = 0; i < nb_bits; ++i) {
+//         int ai = bootsSymDecrypt(&x[i], key);
+//         cout << "decrypted x[" << i << "] = " << ai << endl;
+//     }
 
-    for (int32_t i = 0; i < nb_bits; ++i) {
-        int bi = bootsSymDecrypt(&y[i], key);
-        cout << "decrypted y[" << i << "] = " << bi << endl;
-    }
+//     for (int32_t i = 0; i < nb_bits; ++i) {
+//         int bi = bootsSymDecrypt(&y[i], key);
+//         cout << "decrypted y[" << i << "] = " << bi << endl;
+//     }
    
 
-    // carries
-    LweSample *carry = new_LweSample_array(2, in_out_params);
-    // first carry initialized to 0
-    bootsCONSTANT(carry, 0, bk);
-    // temps
-    LweSample *temp = new_LweSample_array(3, in_out_params);
+//     // carries
+//     LweSample *carry = new_LweSample_array(2, in_out_params);
+//     // first carry initialized to 0
+//     bootsCONSTANT(carry, 0, bk);
+//     // temps
+//     LweSample *temp = new_LweSample_array(3, in_out_params);
 
-    // for (int32_t i = (nb_bits-1); i >= 0; --i) {
-    for (int32_t i = 0; i < nb_bits; ++i) {
-        // int ai = bootsSymDecrypt(&x[i], key);
-        // cout << "decrypted x[" << i << "] = " << ai << endl;
-        // ai = bootsSymDecrypt(&y[i], key);
-        // cout << "decrypted y[" << i << "] = " << ai << endl;
+//     // for (int32_t i = (nb_bits-1); i >= 0; --i) {
+//     for (int32_t i = 0; i < nb_bits; ++i) {
+//         // int ai = bootsSymDecrypt(&x[i], key);
+//         // cout << "decrypted x[" << i << "] = " << ai << endl;
+//         // ai = bootsSymDecrypt(&y[i], key);
+//         // cout << "decrypted y[" << i << "] = " << ai << endl;
 
-        //sumi = xi XOR yi XOR carry(i-1) 
-        bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
-        bootsXOR(sum + i, temp, carry, bk);
+//         //sumi = xi XOR yi XOR carry(i-1) 
+//         bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
+//         bootsXOR(sum + i, temp, carry, bk);
 
         
-        int decryptedbit = bootsSymDecrypt(sum + i, key);
-        cout << "sum[" << i << "] = " << decryptedbit << endl;
+//         int decryptedbit = bootsSymDecrypt(sum + i, key);
+//         cout << "sum[" << i << "] = " << decryptedbit << endl;
         
 
 
-        // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
-        bootsAND(temp + 1, x + i, y + i, bk); // temp1 = xi AND yi
-        bootsAND(temp + 2, carry, temp, bk); // temp2 = carry AND temp
-        bootsXOR(carry + 1, temp + 1, temp + 2, bk);
-        bootsCOPY(carry, carry + 1, bk);
-    }
-    bootsCOPY(sum + nb_bits, carry, bk);
+//         // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
+//         bootsAND(temp + 1, x + i, y + i, bk); // temp1 = xi AND yi
+//         bootsAND(temp + 2, carry, temp, bk); // temp2 = carry AND temp
+//         bootsXOR(carry + 1, temp + 1, temp + 2, bk);
+//         bootsCOPY(carry, carry + 1, bk);
+//     }
+//     bootsCOPY(sum + nb_bits, carry, bk);
 
-    delete_LweSample_array(3, temp);
-    delete_LweSample_array(2, carry);
-}
+//     delete_LweSample_array(3, temp);
+//     delete_LweSample_array(2, carry);
+// }
 
 // //TODO: delete key argument
 // Double full_adder_double(Double x, Double y, 
@@ -934,7 +934,8 @@ Double full_adder_double(Double x, Double y,
 
 	LweSample *sum = new_gate_bootstrapping_ciphertext_array(numberofbits + 1,bk->params);
 
-    full_adder_doublehelper(sum, a, b, integerbitsize + fractionbitsize, bk, in_out_params, key);
+    // full_adder_doublehelper(sum, a, b, integerbitsize + fractionbitsize, bk, in_out_params, key);
+    full_adder(sum, a, b, integerbitsize + fractionbitsize, bk, in_out_params, key);
 
     result.integerpart = sum + fractionbitsize;
 	result.fractionpart = sum; 
