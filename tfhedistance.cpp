@@ -690,19 +690,19 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
     // cout << "decryptedx = " << decryptedx << endl;
     // cout << "decryptedy = " << decryptedy << endl;
 
-    cout << "start of decrypted x for full_adder" <<endl;
-    for (int i=0; i<numberofbits; i++) {
-        int ai = bootsSymDecrypt(&x[i], key);
-        cout << "decrypted ai = " << ai << endl;
-    }
-    cout << "end of decrypted x for full_adder" <<endl;
+    // cout << "start of decrypted x for full_adder" <<endl;
+    // for (int i=0; i<numberofbits; i++) {
+    //     int ai = bootsSymDecrypt(&x[i], key);
+    //     cout << "decrypted ai = " << ai << endl;
+    // }
+    // cout << "end of decrypted x for full_adder" <<endl;
 
-    cout << "start of decrypted y for full_adder" <<endl;
-    for (int i=0; i<numberofbits; i++) {
-        int ai = bootsSymDecrypt(&y[i], key);
-        cout << "decrypted ai = " << ai << endl;
-    }
-    cout << "end of decrypted y for full_adder" <<endl;
+    // cout << "start of decrypted y for full_adder" <<endl;
+    // for (int i=0; i<numberofbits; i++) {
+    //     int ai = bootsSymDecrypt(&y[i], key);
+    //     cout << "decrypted ai = " << ai << endl;
+    // }
+    // cout << "end of decrypted y for full_adder" <<endl;
 
     // carries
     LweSample *carry = new_LweSample_array(2, in_out_params);
@@ -713,23 +713,23 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
 
     for (int32_t i = 0; i < nb_bits; ++i) {
 
-        int ai = bootsSymDecrypt(&x[i], key);
-        cout << "decrypted x[" << i << "] = " << ai << endl;
-        ai = bootsSymDecrypt(&y[i], key);
-        cout << "decrypted y[" << i << "] = " << ai << endl;
+        // int ai = bootsSymDecrypt(&x[i], key);
+        // cout << "decrypted x[" << i << "] = " << ai << endl;
+        // ai = bootsSymDecrypt(&y[i], key);
+        // cout << "decrypted y[" << i << "] = " << ai << endl;
         
 
         //sumi = xi XOR yi XOR carry(i-1) 
         bootsXOR(temp, x + i, y + i, bk); // temp = xi XOR yi
-        ai = bootsSymDecrypt(carry, key);
-        cout << "decrypted carry = " << ai << endl;
-        ai = bootsSymDecrypt(temp, key);
-        cout << "decrypted temp = " << ai << endl;
+        // ai = bootsSymDecrypt(carry, key);
+        // cout << "decrypted carry = " << ai << endl;
+        // ai = bootsSymDecrypt(temp, key);
+        // cout << "decrypted temp = " << ai << endl;
         bootsXOR(sum + i, temp, carry, bk);
 
         
-        int decryptedbit = bootsSymDecrypt(sum + i, key);
-        cout << "sum[" << i << "] = " << decryptedbit << endl;
+        // int decryptedbit = bootsSymDecrypt(sum + i, key);
+        // cout << "sum[" << i << "] = " << decryptedbit << endl;
         
 
 
@@ -738,8 +738,8 @@ void full_adder(LweSample *sum, const LweSample *x, const LweSample *y, const in
         bootsAND(temp + 2, carry, temp, bk); // temp2 = carry AND temp
         bootsXOR(carry + 1, temp + 1, temp + 2, bk);
 
-        int decryptedcarry = bootsSymDecrypt(carry + 1, key);
-        cout << "carry[" << i << "] = " << decryptedcarry << endl;
+        // int decryptedcarry = bootsSymDecrypt(carry + 1, key);
+        // cout << "carry[" << i << "] = " << decryptedcarry << endl;
 
         bootsCOPY(carry, carry + 1, bk);
     }
@@ -953,14 +953,14 @@ Double full_adder_double(Double x, Double y,
 
 
 
-	double decryptedfraction = decryptFractionpart(&a[0], key);
-	cout << "decryptedfraction = " << decryptedfraction << endl;
-	double decryptedfraction2 = decryptFractionpart(&b[0], key);
-	cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
-	int decryptedinteger1 = decryptIntegerpart(&a[fractionbitsize], key);
-    cout << "decryptedinteger1 = " << decryptedinteger1 << endl;
-	double decryptedinteger2 = decryptIntegerpart(&b[fractionbitsize], key);
-	cout << "decryptedinteger2 = " << decryptedinteger2 << endl;
+	// double decryptedfraction = decryptFractionpart(&a[0], key);
+	// cout << "decryptedfraction = " << decryptedfraction << endl;
+	// double decryptedfraction2 = decryptFractionpart(&b[0], key);
+	// cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
+	// int decryptedinteger1 = decryptIntegerpart(&a[fractionbitsize], key);
+    // cout << "decryptedinteger1 = " << decryptedinteger1 << endl;
+	// double decryptedinteger2 = decryptIntegerpart(&b[fractionbitsize], key);
+	// cout << "decryptedinteger2 = " << decryptedinteger2 << endl;
     
     
     // //
@@ -981,12 +981,12 @@ Double full_adder_double(Double x, Double y,
     // full_adder_MUX(sum, a, b, integerbitsize + fractionbitsize, key);
 
 
-    cout << "start of decrypted sum" <<endl;
-    for (int i=0; i<numberofbits; i++) {
-        int ai = bootsSymDecrypt(&sum[i], key);
-        cout << "decrypted ai = " << ai << endl;
-    }
-    cout << "end of decrypted sum" <<endl;
+    // cout << "start of decrypted sum" <<endl;
+    // for (int i=0; i<numberofbits; i++) {
+    //     int ai = bootsSymDecrypt(&sum[i], key);
+    //     cout << "decrypted ai = " << ai << endl;
+    // }
+    // cout << "end of decrypted sum" <<endl;
 
     result.integerpart = sum + fractionbitsize;
 	result.fractionpart = sum; 
@@ -2284,14 +2284,14 @@ Double euclidean(Double vector1[], Double vector2[], const int numfeatures, cons
         absdifference.fractionpart = new_gate_bootstrapping_ciphertext_array(fractionbitsize,params);
 
         for (int j=0; j < integerbitsize; j++){
-            cout << "doing " << j << "th MUX" << endl;
+            // cout << "doing " << j << "th MUX" << endl;
             bootsMUX(absdifference.integerpart+j, comp, difference2.integerpart+j, difference1.integerpart+j, bk);
         }
         for (int j=0; j < fractionbitsize; j++){
             bootsMUX(absdifference.fractionpart+j, comp, difference2.fractionpart+j, difference1.fractionpart+j, bk);
         }
 
-        cout << "starting multiplication" << endl;
+        // cout << "starting multiplication" << endl;
         Double product = full_multiplicator_double(absdifference, absdifference, nb_bits, bk, in_out_params, key);
 
         //temp used to hold current result 
@@ -2824,15 +2824,30 @@ int main(int argc, char *argv[]){
 
         }
         case 11: {
-            Double vector1[1];
-            Double vector2[1];
+
+            int numfeatures = 2;
+            Double vector1[numfeatures];
+            Double vector2[numfeatures];
             // Double encrypted1 = encryptDouble(58.32, key);
             // Double encrypted2 = encryptDouble(68.06, key);
-            Double encrypted1 = encryptDouble(4.75, key);
-            Double encrypted2 = encryptDouble(3.25, key);
-            vector1[0] = encrypted1;
-            vector2[0] = encrypted2;
-            int numfeatures = 1;
+
+            double plainvector1[] = {53.18, 58.32};
+            double plainvector2[] = {68.52, 68.07};
+            
+
+            // double plainvector1[] = {2.5, 5.75};
+            // double plainvector2[] = {3.25, 2.25};
+            
+            for (int i=0; i < numfeatures; i++){
+                Double thisdouble1 = encryptDouble(plainvector1[i], key);
+                Double thisdouble2 = encryptDouble(plainvector2[i], key);
+                vector1[i] = thisdouble1;
+                vector2[i] = thisdouble2;
+            }  
+            // Double encrypted1 = encryptDouble(4.75, key);
+            // Double encrypted2 = encryptDouble(3.25, key);
+            // vector1[0] = encrypted1;
+            // vector2[0] = encrypted2;
 
             Double result = euclidean(vector1, vector2, numfeatures, numberofbits, bk, in_out_params, key);
             double decrypted = decryptDouble(result, key);
