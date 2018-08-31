@@ -377,4 +377,6 @@ calculating 2-norm using doubles for the whole dataset between the same person u
 % end
 % num_disk=16;
 
-required 1235.551373 seconds.
+required 1235.551373 seconds.  (these 2-norm calculation times were measure in Matlab)
+
+calculating 2-norm distances using 16 number of features using doubles on encrypted domain and using 13 bits to represent integerpart and 13 bits to represent fractionpart took 4378.47 seconds. 

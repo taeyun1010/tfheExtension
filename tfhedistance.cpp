@@ -1185,10 +1185,10 @@ Double full_subtractor_double(Double x, Double y,
 		// bootsCOPY(&d[i],&input2.fractionpart[i-integerbitsize],bk);
 
 	}
-	double decryptedfraction = decryptFractionpart(&a[0], key);
-	cout << "decryptedfraction = " << decryptedfraction << endl;
-	double decryptedfraction2 = decryptFractionpart(&b[0], key);
-	cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
+	// double decryptedfraction = decryptFractionpart(&a[0], key);
+	// cout << "decryptedfraction = " << decryptedfraction << endl;
+	// double decryptedfraction2 = decryptFractionpart(&b[0], key);
+	// cout << "decryptedfraction2 = " << decryptedfraction2 << endl;
 	// //
 	// for (int i=0; i < fractionbitsize; i++){
 	// 	bootsCOPY(&c[i],&input1.fractionpart[i],bk);
@@ -1214,7 +1214,7 @@ Double full_subtractor_double(Double x, Double y,
 // ? returns 1 if y >= x, 0 if y < x ???,  works only for positive integers
 void comparison_MUX(LweSample *comp, const LweSample *x, const LweSample *y, const int32_t nb_bits,
                     const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
-    clock_t begin = clock();
+    // clock_t begin = clock();
     // carries
     LweSample *carry = new_LweSample_array(2, in_out_params);
     bootsCONSTANT(carry, 1, bk); // first carry initialized to 1
@@ -1230,15 +1230,15 @@ void comparison_MUX(LweSample *comp, const LweSample *x, const LweSample *y, con
 
     delete_LweSample(temp);
     delete_LweSample_array(2, carry);
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    cout << "elapsed_sec to compare = " << elapsed_secs << endl;
+    // clock_t end = clock();
+    // double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    // cout << "elapsed_sec to compare = " << elapsed_secs << endl;
 }
 
 // ? returns 1 if y >= x, 0 if y < x ???,  works only for positive integers
 void comparison_MUX_double(LweSample *comp, Double x, Double y, const int32_t nb_bits,
                     const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params) {
-    clock_t begin = clock();
+    // clock_t begin = clock();
     
 	LweSample* a = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
 	LweSample* b = new_gate_bootstrapping_ciphertext_array(integerbitsize + fractionbitsize,bk->params);
@@ -1264,9 +1264,9 @@ void comparison_MUX_double(LweSample *comp, Double x, Double y, const int32_t nb
     comparison_MUX(comp, a, b, nb_bits, bk, in_out_params);
 
 
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    cout << "elapsed_sec to compare = " << elapsed_secs << endl;
+    // clock_t end = clock();
+    // double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    // cout << "elapsed_sec to compare = " << elapsed_secs << endl;
 }
 
 // //calculate x*y,  uses same number of bits to represent multiplication result, might cause overflow
@@ -1476,7 +1476,7 @@ void comparison_MUX_double(LweSample *comp, Double x, Double y, const int32_t nb
 void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const int32_t nb_bits,
                 const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key) {
     
-    clock_t begin = clock();
+    // clock_t begin = clock();
 
     const TFheGateBootstrappingParameterSet* params = key->params;
     
@@ -1520,7 +1520,7 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
     LweSample *temp3 = new_gate_bootstrapping_ciphertext_array(nb_bits * 2,params);
 
     for (int i=0; i< nb_bits; i++){
-        cout << "doing " << i << "th bit" << endl;
+        // cout << "doing " << i << "th bit" << endl;
 
         //ybit being used to AND
         LweSample* ybit = y+i;    
@@ -1580,22 +1580,22 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
     // int decryptedsum = decryptLweSample(partialsum, nb_bits, key);
     // cout << "decryptedsum = " << decryptedsum << endl;
     
-    cout << "start of final partialsum decrypted" << endl;
+    // cout << "start of final partialsum decrypted" << endl;
     for (int i=0; i < (nb_bits*2); i++){
-        int ai = bootsSymDecrypt(&partialsum[i], key);
-        cout << "ai[" << i << "] = " << ai << endl;
+        // int ai = bootsSymDecrypt(&partialsum[i], key);
+        // cout << "ai[" << i << "] = " << ai << endl;
         bootsCOPY(product+i, partialsum+i, bk);
     }
-    cout << "end of final partialsum decrypted" << endl;
+    // cout << "end of final partialsum decrypted" << endl;
     
     // product = partialsum;
     
     //TODO: deallocate pointers
     delete_LweSample_array(nb_bits+1, partialsum);
 
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    cout << "elapsed secs = " << elapsed_secs << endl;
+    // clock_t end = clock();
+    // double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    // cout << "elapsed secs = " << elapsed_secs << endl;
 
 }
 
@@ -2237,12 +2237,12 @@ Double full_multiplicator_double(Double x, Double y, const int32_t nb_bits,
     // full_multiplicator_doublehelper(product, a, b, nb_bits , bk, in_out_params, key);
     full_multiplicator(product, a, b, nb_bits , bk, in_out_params, key);
 
-    cout << "start of decrypted product " << endl;
-    for (int i=0; i < (nb_bits*2); i++){
-        int ai = bootsSymDecrypt(&product[i], key);
-        cout << "ai[" << i << "] = " << ai << endl;
-    }
-    cout << "end of decrypted product " << endl;
+    // cout << "start of decrypted product " << endl;
+    // for (int i=0; i < (nb_bits*2); i++){
+    //     int ai = bootsSymDecrypt(&product[i], key);
+    //     cout << "ai[" << i << "] = " << ai << endl;
+    // }
+    // cout << "end of decrypted product " << endl;
 
     // first (least significant) fractionbitsize bits of fractionpart are lost, last (most significant) integerbitsize of integerpart are lost
     result.fractionpart = product + fractionbitsize;
@@ -2255,6 +2255,9 @@ Double full_multiplicator_double(Double x, Double y, const int32_t nb_bits,
 //calculate the square of Double of Eulcidean distances between the two given Double vectors
 Double euclidean(Double vector1[], Double vector2[], const int numfeatures, const int32_t nb_bits,
                 const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key){
+
+    clock_t begin = clock();
+    
     const TFheGateBootstrappingParameterSet* params = bk->params;
     Double result;
     result.integerpart = new_gate_bootstrapping_ciphertext_array(integerbitsize,params);
@@ -2309,6 +2312,9 @@ Double euclidean(Double vector1[], Double vector2[], const int numfeatures, cons
 
 
     }
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    cout << "time taken to do calculate Euclidean distance = " << elapsed_secs << endl;
     return result;
 }
 
@@ -2825,14 +2831,14 @@ int main(int argc, char *argv[]){
         }
         case 11: {
 
-            int numfeatures = 2;
+            int numfeatures = 16;
             Double vector1[numfeatures];
             Double vector2[numfeatures];
             // Double encrypted1 = encryptDouble(58.32, key);
             // Double encrypted2 = encryptDouble(68.06, key);
 
-            double plainvector1[] = {53.18, 58.32};
-            double plainvector2[] = {68.52, 68.07};
+            double plainvector1[] = {53.1774257887016, 58.3208527734925, 53.8796564513203, 36.5960038381320, 49.8210980938997, 53.8630255513049, 49.7688832307925, 74.8197763989799, 61.9841652189530, 61.2600609794759, 70.4422591297480, 62.1370938283494, 47.9060076431539, 47.0480624552814, 44.9931183004167, 68.0383262878939};
+            double plainvector2[] = {68.5197817927425, 68.0657482642345, 63.8217783506839, 55.0384531673322, 55.8470171682608, 54.0667840605675, 54.2067732520960, 66.0898527665596, 83.8977193079839, 94.8085760155773, 88.6278863364581, 101.820709779395, 86.6662657635354, 70.9965937618794, 63.6804273434945, 74.4111681799650};
             
 
             // double plainvector1[] = {2.5, 5.75};
@@ -2853,6 +2859,8 @@ int main(int argc, char *argv[]){
             double decrypted = decryptDouble(result, key);
             cout << "answer = " << decrypted << endl;
 
+
+// squared Euclidean distance should return 6.8785e+03
 //                     // vettore_a
 //         // 53.1774257887016
 // 58.3208527734925
