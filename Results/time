@@ -379,4 +379,61 @@ calculating 2-norm using doubles for the whole dataset between the same person u
 
 required 1235.551373 seconds.  (these 2-norm calculation times were measure in Matlab)
 
-calculating 2-norm distances using 16 number of features using doubles on encrypted domain and using 13 bits to represent integerpart and 13 bits to represent fractionpart took 4378.47 seconds. 
+calculating 2-norm distances using 16 number of features using doubles on encrypted domain and using 13 bits to represent integerpart and 13 bits to represent fractionpart took 4378.47 seconds.
+
+insert fingerprintdoubles;
+Query OK, 0 rows affected (1 day 5 hours 7 min 16.61 sec) 
+using 16 number of integer bits and 16 fraction bits, and 16 number of features
++--------------------+----------------------------------------------+------------+
+| Database           | Table                                        | Size in MB |
++--------------------+----------------------------------------------+------------+
+| encrypteddoublefps | ciphertext_integer_bit6                      |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit0                     |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit9                     |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit5                      |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit8                     |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit4                      |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit7                     |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit3                      |      71.88 |
+| tfhe               | ciphertext_bit9                              |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit6                     |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit2                      |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit5                     |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit15                     |      71.88 |
+| tfhe               | ciphertext_bit8                              |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit4                     |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit14                     |      71.88 |
+| tfhe               | ciphertext_bit7                              |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit13                     |      71.88 |
+| tfhe               | ciphertext_bit6                              |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit3                     |      71.88 |
+| tfhe               | ciphertext_bit13                             |      71.88 |
+| tfhe               | ciphertext_bit5                              |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit2                     |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit12                     |      71.88 |
+| tfhe               | ciphertext_bit4                              |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit15                    |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit11                     |      71.88 |
+| tfhe               | ciphertext_bit12                             |      71.88 |
+| tfhe               | ciphertext_bit3                              |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit14                    |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit10                     |      71.88 |
+| tfhe               | ciphertext_bit11                             |      71.88 |
+| tfhe               | ciphertext_bit2                              |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit13                    |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit1                      |      71.88 |
+| tfhe               | ciphertext_bit10                             |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit12                    |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit0                      |      71.88 |
+| tfhe               | ciphertext_bit1                              |      71.88 |
+| tfhe               | ciphertext_bit15                             |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit11                    |      71.88 |
+| tfhe               | ciphertext_bit0                              |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit9                      |      71.88 |
+| tfhe               | ciphertext_bit14                             |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit8                      |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit10                    |      71.88 |
+| encrypteddoublefps | ciphertext_integer_bit7                      |      71.88 |
+| encrypteddoublefps | ciphertext_fraction_bit1                     |      71.88 |
+
+ 
