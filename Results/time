@@ -436,4 +436,83 @@ using 16 number of integer bits and 16 fraction bits, and 16 number of features
 | encrypteddoublefps | ciphertext_integer_bit7                      |      71.88 |
 | encrypteddoublefps | ciphertext_fraction_bit1                     |      71.88 |
 
+
+taeyun@taeyun-desktop:~/Desktop/tensor1_new$ ./tfhedistance 3.1 4.1 11 16 13 3
+time taken to do calculate Euclidean distance = 1745.96
+start of integerpart
+temp[0] = 1
+temp[1] = 1
+temp[2] = 0
+temp[3] = 1
+temp[4] = 1
+temp[5] = 0
+temp[6] = 1
+temp[7] = 1
+temp[8] = 0
+temp[9] = 1
+temp[10] = 0
+temp[11] = 1
+temp[12] = 1
+end of integerpart
+start of fractionpart
+temp[0] = 0
+temp[1] = 1
+temp[2] = 1
+temp[3] = 1
+temp[4] = 1
+temp[5] = 0
+temp[6] = 1
+temp[7] = 1
+temp[8] = 0
+temp[9] = 1
+temp[10] = 1
+temp[11] = 0
+temp[12] = 1
+end of fractionpart
+decryptedintpart = 6875
+temp[2] = 1
+temp[1] = 1
+temp[0] = 0
+decryptedfracpart = 0.75
+answer = 6875.75
+taeyun@taeyun-desktop:~/Desktop/tensor1_new$ ./tfhedistance 3.1 4.1 11 16 13 2
+Segmentation fault (core dumped)
+taeyun@taeyun-desktop:~/Desktop/tensor1_new$ ./tfhedistance 3.1 4.1 11 15 13 2
+time taken to do calculate Euclidean distance = 1549.19
+start of integerpart
+temp[0] = 1
+temp[1] = 1
+temp[2] = 0
+temp[3] = 0
+temp[4] = 0
+temp[5] = 1
+temp[6] = 1
+temp[7] = 1
+temp[8] = 0
+temp[9] = 1
+temp[10] = 0
+temp[11] = 1
+temp[12] = 1
+end of integerpart
+start of fractionpart
+temp[0] = 1
+temp[1] = 0
+temp[2] = 1
+temp[3] = 1
+temp[4] = 0
+temp[5] = 0
+temp[6] = 0
+temp[7] = 1
+temp[8] = 1
+temp[9] = 1
+temp[10] = 0
+temp[11] = 1
+temp[12] = 0
+end of fractionpart
+decryptedintpart = 6883
+temp[1] = 0
+temp[0] = 1
+decryptedfracpart = 0.25
+answer = 6883.25
+
  
