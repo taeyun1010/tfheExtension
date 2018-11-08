@@ -22,6 +22,7 @@ int bitsize = 0;
 // these are number of bits used for representing Double struct
 int integerbitsize = 0;
 int fractionbitsize = 0;
+double times[10];
 
 struct tensor{
 	double var;
@@ -831,7 +832,7 @@ void *zero_initializer_Double(void *arg)
 
 LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudKeySet* EK)	// O(2*n) algorithm = about 
 {
-	clock_t begin = clock();
+	// clock_t begin = clock();
 	int bin = 1;
 	while(bin<bitsize)	bin*=2;
 	LweSample *Container[bin*2];
@@ -885,9 +886,9 @@ LweSample* CipherMul(LweSample* a,LweSample* b,const TFheGateBootstrappingCloudK
                 pivot+=len*2;
                 len/=2;
         }
-		clock_t end = clock();
-		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-		cout << "elapsed secs to calculate a product = " << elapsed_secs << endl;
+		// clock_t end = clock();
+		// double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+		// cout << "elapsed secs to calculate a product = " << elapsed_secs << endl;
         return Container[2*bin-2];
 }
 
@@ -1117,7 +1118,7 @@ void f1(int n)
 //Given two arrays containing ciphertexts, calculate the square of Euclidean distance between them (in encrypted form)
 // REQUIRES: the two input arrays must have the same number of ciphertexts
 LweSample* CipherEuclid(vector<LweSample*> a,vector<LweSample*> b,const TFheGateBootstrappingCloudKeySet* EK){
-	clock_t begin = clock();
+	// clock_t begin = clock();
 	int result;
 	LweSample* sum = new_LweSample_array(bitsize, EK->params->in_out_params);
 
@@ -1153,9 +1154,10 @@ LweSample* CipherEuclid(vector<LweSample*> a,vector<LweSample*> b,const TFheGate
 		// }	
 		// cout << "sum result = " << result << endl;
 	}
-	clock_t end = clock();
-	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	cout << "elapsed secs to calculate 2-norm = " << elapsed_secs << endl;
+	// clock_t end = clock();
+	// double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	// cout << "elapsed secs to calculate 2-norm = " << elapsed_secs << endl;
+	
 	return sum;
 }
 
@@ -1304,7 +1306,7 @@ LweSample* CipherAbs(LweSample* ciphertext, const TFheGateBootstrappingCloudKeyS
 // REQUIRES: the two input arrays must have the same number of ciphertexts
 LweSample* CipherOneNorm(vector<LweSample*> a,vector<LweSample*> b,const TFheGateBootstrappingCloudKeySet* EK){
 
-	clock_t begin = clock();
+	// clock_t begin = clock();
 
 	int result;
 	LweSample* sum = new_LweSample_array(bitsize, EK->params->in_out_params);
@@ -1324,10 +1326,10 @@ LweSample* CipherOneNorm(vector<LweSample*> a,vector<LweSample*> b,const TFheGat
 		sum = CipherAdd(sum, abs, EK);
 	}
 
-	clock_t end = clock();
+	// clock_t end = clock();
 
-	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	cout << "elapsed secs to calculate one-norm = " << elapsed_secs << endl;
+	// double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	// cout << "elapsed secs to calculate one-norm = " << elapsed_secs << endl;
 
 	return sum;
 }
@@ -1446,6 +1448,7 @@ int main(int argc, char *argv[])
 		// cout << "result = " << result << endl;
 
 		vector<LweSample*> vector1, vector2;	
+		// square of Euclidean distance should return 765
 		int fpvector1[16] = {53,58,53,36,49,53,49,74,61,61,70,62,47,47,44,68};
 		int fpvector2[16] = {59,55,53,46,48,59,60,70,52,54,57,71,50,49,46,61};
 		for (int i=0; i< 16; i++){
@@ -1455,12 +1458,13 @@ int main(int argc, char *argv[])
 			vector2.push_back(ciphertext2);
 
 		}
-		for (int i=28; i < 32; i++){
+		for (int i=32; i < 33; i++){
 			bitsize = i;
 			cout << "bitsize = " << bitsize << endl;
 			Test = CipherEuclid(vector1, vector2, &key->cloud);
 			int result = decryptLweSample(Test, key);
 			cout << "result = " << result << endl;
+			
 		}
 		
 
@@ -1484,7 +1488,7 @@ int main(int argc, char *argv[])
 			vector2.push_back(ciphertext2);
 
 		}
-		for (int i=28; i<32; i++){
+		for (int i=10; i<11; i++){
 			bitsize = i;
 			cout << "bitsize = " << bitsize << endl;
 			Test = CipherOneNorm(vector1, vector2, &key->cloud);

@@ -23,3 +23,5 @@ g++ -ansi -shared -fPIC -llua5.1 -I/usr/include/lua5.1/ -Wall -O3 -o tfhelib.so 
 gcc -shared -o udf_example.so udf_example.c -L/usr/lib/x86_64-linux-gnu -lmysqlclient -lpthread -lz -lm -lrt -ldl -I/usr/include/mysql -fPIC
 
 g++ tfhedistance.cpp -o tfhedistance -ltfhe-spqlios-fma -std=gnu++11 -pthread
+
+sudo perf stat -r 2 ./proposed 3 9 5 32 16 16

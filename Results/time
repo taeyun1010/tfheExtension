@@ -515,4 +515,50 @@ temp[0] = 1
 decryptedfracpart = 0.25
 answer = 6883.25
 
- 
+Time for 10 runs of Euclidean distance between vectors containing 16 16 bit integers:
+
+ Performance counter stats for './proposed 3 9 5 32 16 16' (10 runs):
+
+     416071.549896      task-clock (msec)         #    2.510 CPUs utilized            ( +-  0.10% )
+            70,454      context-switches          #    0.169 K/sec                    ( +-  7.20% )
+             3,514      cpu-migrations            #    0.008 K/sec                    ( +-  1.82% )
+           168,071      page-faults               #    0.404 K/sec                    ( +-  0.02% )
+ 1,507,952,839,481      cycles                    #    3.624 GHz                      ( +-  0.07% )
+ 3,960,837,630,876      instructions              #    2.63  insn per cycle           ( +-  0.00% )
+   336,414,213,369      branches                  #  808.549 M/sec                    ( +-  0.00% )
+       841,932,575      branch-misses             #    0.25% of all branches          ( +-  0.19% )
+
+     165.787612588 seconds time elapsed                                          ( +-  0.34% )
+
+
+Time for 10 runs of Euclidean distance between vectors containing 16 10 bit integers:
+ Performance counter stats for './proposed 3 9 5 32 16 16' (10 runs):
+
+     267151.110440      task-clock (msec)         #    2.525 CPUs utilized            ( +-  0.08% )
+            41,114      context-switches          #    0.154 K/sec                    ( +-  3.41% )
+             2,561      cpu-migrations            #    0.010 K/sec                    ( +-  1.51% )
+           145,898      page-faults               #    0.546 K/sec                    ( +-  0.01% )
+   968,416,591,393      cycles                    #    3.625 GHz                      ( +-  0.07% )
+ 2,540,625,570,214      instructions              #    2.62  insn per cycle           ( +-  0.00% )
+   215,955,419,388      branches                  #  808.364 M/sec                    ( +-  0.00% )
+       534,773,518      branch-misses             #    0.25% of all branches          ( +-  0.22% )
+
+     105.796225092 seconds time elapsed                                          ( +-  0.15% )
+
+
+
+Time for 10 runs of one-norm distance between vectors containing 16 10 bit integers:
+
+ Performance counter stats for './proposed 3 9 7 32 16 16' (10 runs):
+
+      66445.174626      task-clock (msec)         #    1.339 CPUs utilized            ( +-  0.24% )
+             2,645      context-switches          #    0.040 K/sec                    ( +-  6.37% )
+               110      cpu-migrations            #    0.002 K/sec                    ( +-  9.91% )
+           104,086      page-faults               #    0.002 M/sec                    ( +-  0.00% )
+   244,615,930,435      cycles                    #    3.681 GHz                      ( +-  0.06% )
+   643,053,884,694      instructions              #    2.63  insn per cycle           ( +-  0.00% )
+    54,583,937,779      branches                  #  821.488 M/sec                    ( +-  0.00% )
+       132,691,668      branch-misses             #    0.24% of all branches          ( +-  0.44% )
+
+      49.637495866 seconds time elapsed                                          ( +-  0.25% )
+

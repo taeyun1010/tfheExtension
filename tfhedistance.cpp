@@ -262,20 +262,20 @@ double decryptDouble(Double d, TFheGateBootstrappingSecretKeySet* key){
 	LweSample* integerpart = d.integerpart;
 	LweSample* fractionpart = d.fractionpart;
 
-    cout << "start of integerpart" << endl;
-    for(int i=0 ; i < integerbitsize; i++){
-        int temp = bootsSymDecrypt(&integerpart[i],key);
-		cout << "temp[" << i << "] = " << temp << endl;
-    }
-    cout << "end of integerpart" << endl;
+    // cout << "start of integerpart" << endl;
+    // for(int i=0 ; i < integerbitsize; i++){
+    //     int temp = bootsSymDecrypt(&integerpart[i],key);
+	// 	cout << "temp[" << i << "] = " << temp << endl;
+    // }
+    // cout << "end of integerpart" << endl;
 
 
-    cout << "start of fractionpart" << endl;
-    for(int i=0 ; i < integerbitsize; i++){
-        int temp = bootsSymDecrypt(&fractionpart[i],key);
-		cout << "temp[" << i << "] = " << temp << endl;
-    }
-    cout << "end of fractionpart" << endl;
+    // cout << "start of fractionpart" << endl;
+    // for(int i=0 ; i < integerbitsize; i++){
+    //     int temp = bootsSymDecrypt(&fractionpart[i],key);
+	// 	cout << "temp[" << i << "] = " << temp << endl;
+    // }
+    // cout << "end of fractionpart" << endl;
 
     //
     // //decrypt and rebuild the 32-bit plaintext answer
@@ -288,9 +288,9 @@ double decryptDouble(Double d, TFheGateBootstrappingSecretKeySet* key){
     //
 
 	int decryptedintpart = decryptIntegerpart(integerpart, key);
-	cout << "decryptedintpart = " << decryptedintpart << endl;
+	// cout << "decryptedintpart = " << decryptedintpart << endl;
 	double decryptedfracpart = decryptFractionpart(fractionpart, key);
-	cout << "decryptedfracpart = " << decryptedfracpart << endl;
+	// cout << "decryptedfracpart = " << decryptedfracpart << endl;
 
     // //if the plaintext value is going to be negative
     // if (decryptedintpart < 0){
@@ -2554,7 +2554,7 @@ Double full_multiplicator_double(Double x, Double y, const int32_t nb_bits,
 Double euclidean(Double vector1[], Double vector2[], const int numfeatures, const int32_t nb_bits,
                 const TFheGateBootstrappingCloudKeySet *bk, const LweParams *in_out_params, TFheGateBootstrappingSecretKeySet* key){
 
-    clock_t begin = clock();
+    // clock_t begin = clock();
     
     const TFheGateBootstrappingParameterSet* params = bk->params;
     Double result;
@@ -2610,9 +2610,9 @@ Double euclidean(Double vector1[], Double vector2[], const int numfeatures, cons
 
 
     }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    cout << "time taken to do calculate Euclidean distance = " << elapsed_secs << endl;
+    // clock_t end = clock();
+    // double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    // cout << "time taken to do calculate Euclidean distance = " << elapsed_secs << endl;
     return result;
 }
 
