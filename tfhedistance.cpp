@@ -1495,7 +1495,7 @@ struct thread_data {
 };
 
 // helper for full_multiplicator version that uses threads
-void full_multiplicator_helper(void *threadarg){
+void* full_multiplicator_helper(void *threadarg){
     struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
     const int32_t nb_bits = my_data->nb_bits;
@@ -1587,7 +1587,9 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
     // clock_t begin = clock();
     int numthreads = nb_bits/2 + 1;
     pthread_t threads[numthreads];
-    struct thread_data td[numthreads];
+    int int_answer;
+    // pthread_attr_t attr;
+    // struct thread_data td[numthreads];
 
     const TFheGateBootstrappingParameterSet* params = key->params;
     LweSample *totalsum = new_LweSample_array(nb_bits*2+1, in_out_params);
@@ -1617,21 +1619,35 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
     // cout << "y = " << decryptedy << endl;
     LweSample *partialsums[numthreads];
 
+    // // Initialize and set thread joinable
+    // pthread_attr_init(&attr);
+    // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    void *status;
     for(int i=0; i<numthreads; i++){
+        struct thread_data* td;
+        td = (struct thread_data*)malloc(sizeof(struct thread_data));
         partialsums[i] = new_LweSample_array(nb_bits*2+1, in_out_params);
         LweSample *partialsum = partialsums[i];
-        td[i].bk = bk;
-        td[i].in_out_params = in_out_params;
-        td[i].nb_bits = nb_bits;
-        td[i].partialsum = partialsum;
-        td[i].params = key->params;
-        td[i].x = x;
-        td[i].y = y;
-        td[i].key = key;
+        // td[i].bk = bk;
+        // td[i].in_out_params = in_out_params;
+        // td[i].nb_bits = nb_bits;
+        // td[i].partialsum = partialsum;
+        // td[i].params = key->params;
+        // td[i].x = x;
+        // td[i].y = y;
+        // td[i].key = key;
+        td->bk = bk;
+        td->in_out_params = in_out_params;
+        td->nb_bits = nb_bits;
+        td->partialsum = partialsum;
+        td->params = key->params;
+        td->x = x;
+        td->y = y;
+        td->key = key;
         for (int j=0; j < (nb_bits*2+1); j++){
             bootsCONSTANT(&partialsum[j], 0, bk); // initialized to 0
         }
-        int rc = pthread_create(&threads[i], NULL, full_multiplicator_helper,(void *)&td[i]);
+        int rc = pthread_create(&threads[i], NULL, &full_multiplicator_helper,(void *)td);
       
         if (rc) {
             cout << "Error:unable to create thread," << rc << endl;
@@ -1639,6 +1655,36 @@ void full_multiplicator(LweSample *product, LweSample *x, LweSample *y, const in
         }
     }
 
+    // free attribute and wait for the other threads
+    // pthread_attr_destroy(&attr);
+    for(int i = 0; i < numthreads; i++ ) {
+        int rc = pthread_join(threads[i], &status);
+        if (rc) {
+            cout << "Error:unable to join," << rc << endl;
+            exit(-1);
+        }
+        
+        cout << "Main: completed thread id :" << i ;
+        cout << "  exiting with status :" << status << endl;
+    }
+
+    for(int i=0; i<numthreads; i++){
+        LweSample *partialsum = partialsums[i];
+        for (int j=0; j< (numberofbits); j++) {
+            int ai = bootsSymDecrypt(&partialsum[j], key);
+            int_answer |= (ai<<j);
+        }
+        cout << "shited multiplication int_answer = " << int_answer << endl;
+
+        full_adder(totalsum, totalsum, partialsums[i], nb_bits*2, bk, in_out_params, key);
+    }
+
+    for (int i=0; i< (numberofbits); i++) {
+        int ai = bootsSymDecrypt(&totalsum[i], key);
+        int_answer |= (ai<<i);
+    }
+    
+    cout << "multiplication int_answer = " << int_answer << endl;
     // // temps
     // // LweSample *temp = new_LweSample_array(nb_bits, in_out_params);
 
