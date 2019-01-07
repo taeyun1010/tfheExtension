@@ -1028,7 +1028,7 @@ Double CipherMulDouble(Double input1, Double input2, const TFheGateBootstrapping
 	return result;
 }
 
-//helper for CipherEuclid to execute that concurrently
+//helper for CipherEuclid to execute concurrently
 //TODO: delete key argument
 void CipherEuclidHelper(vector<LweSample*> squares, LweSample* ciphertext1, LweSample* ciphertext2, const TFheGateBootstrappingCloudKeySet* EK, TFheGateBootstrappingSecretKeySet* key){
 	LweSample* difference;
